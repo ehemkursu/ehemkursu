@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Eğitim - Kesin Çözüm v5</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 95%; max-width: 950px; }
+        .info-panel { background: #f0fdf4; border-left: 6px solid var(--excel-green); padding: 18px; margin-bottom: 20px; color: #166534; font-weight: 600; }
+        
+        .excel-table { border-collapse: collapse; margin: 0 auto; user-select: none; table-layout: fixed; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 90px; height: 32px; text-align: center; font-size: 14px; position: relative; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; cursor: pointer; }
+        
+        .col-grabber { position: absolute; right: -3px; top: 0; width: 8px; height: 100%; cursor: col-resize; z-index: 50; }
+        .row-grabber { position: absolute; bottom: -4px; left: 0; width: 100%; height: 10px; cursor: row-resize; z-index: 50; }
+        .col-grabber:hover, .row-grabber:hover { background: rgba(33, 115, 70, 0.3); }
+
+        .selected { background-color: rgba(34, 197, 94, 0.2) !important; border: 1.5px solid var(--excel-green) !important; }
+        .controls { margin-top: 25px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        button { padding: 12px 35px; background: var(--excel-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        input { width: 90%; height: 85%; border: 2px solid var(--excel-green); outline: none; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+        <h2 style="margin:0; color:#1e293b;">Excel Uygulamalı Eğitim</h2>
+        <span id="stepDisplay" style="background:var(--excel-green); color:white; padding:4px 12px; border-radius:20px;">Sayfa: 1 / 13</span>
+    </div>
+    <div class="info-panel" id="instruction">Yönerge yükleniyor...</div>
+
+    <table class="excel-table" id="mainTable">
+        <thead>
+            <tr id="headerRow">
+                <th style="width: 45px;" onmousedown="handleAllClick()">◢</th>
+                <th id="h-A" onmousedown="hDown('col','A')" onmouseover="hOver('col','A')">A<div class="col-grabber"></div></th>
+                <th id="h-B" onmousedown="hDown('col','B')" onmouseover="hOver('col','B')">B<div class="col-grabber"></div></th>
+                <th id="h-C" onmousedown="hDown('col','C')" onmouseover="hOver('col','C')">C<div class="col-grabber" id="c-res"></div></th>
+                <th id="h-D" onmousedown="hDown('col','D')" onmouseover="hOver('col','D')">D<div class="col-grabber"></div></th>
+                <th id="h-E" onmousedown="hDown('col','E')" onmouseover="hOver('col','E')">E<div class="col-grabber"></div></th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="controls">
+        <button id="nextBtn" onclick="goToNextStep()" disabled>Sonraki Sayfaya Geç →</button>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    let selectedSet = new Set();
+    let isDragging = false;
+    let dragMode = null;
+    let keys = { ctrl: false, shift: false };
+
+    const tasks = {
+        1: { msg: "<b>B2</b> hücresine tıklayarak tek bir hücreyi işaretleyin.", type: "single", target: "B2" },
+        2: { msg: "Sol tıkla basılı tutup <b>A1'den C3'e kadar</b> alanı sürükleyerek seçin.", type: "range", target: ["A1","A2","A3","B1","B2","B3","C1","C2","C3"] },
+        3: { msg: "<b>CTRL</b> tuşuna basılı tutarak <b>A1, C1 ve E1</b> hücrelerini seçin.", type: "multi", target: ["A1","C1","E1"] },
+        4: { msg: "<b>A5</b>'e tıklayın, sonra <b>SHIFT</b> tuşuna basılı tutarak <b>E5</b>'e tıklayın.", type: "shift", target: ["A5","B5","C5","D5","E5"] },
+        5: { msg: "Sol üstteki <b>◢</b> butonuna basarak tüm sayfayı işaretleyin.", type: "all" },
+        6: { msg: "<b>B Sütununu</b> harfine tıklayarak işaretleyin.", type: "col", target: "B" },
+        7: { msg: "<b>D ve E sütunlarını</b> harflerinden sürükleyerek birlikte işaretleyin.", type: "col-multi", target: ["D","E"] },
+        8: { msg: "<b>3. Satırı</b> numarasına tıklayarak işaretleyin.", type: "row", target: "3" },
+        9: { msg: "<b>5 ve 6. satırları</b> numaralarından sürükleyerek birlikte işaretleyin.", type: "row-multi", target: ["5","6"] },
+        10: { msg: "<b>B2</b> hücresine tıklayın, <b>'Edremit'</b> yazıp Enter'a basın.", type: "input", cell: "B2", val: "edremit" },
+        11: { msg: "<b>B2</b> hücresindeki metni seçin ve klavyeden <b>Delete</b> ile silin.", type: "delete", cell: "B2" },
+        12: { msg: "<b>C ve D sütunları arasındaki çizgiden</b> tutup sağa çekerek genişletin.", type: "resize-col" },
+        13: { msg: "<b>2 ve 3. satır numaraları arasındaki çizgiden</b> tutup aşağı çekerek yüksekliği artırın.", type: "resize-row" }
+    };
+
+    function initTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        for (let r = 1; r <= 8; r++) {
+            let tr = document.createElement('tr');
+            tr.id = "tr-" + r;
+            let rowHeader = `<th id="h-${r}" onmousedown="hDown('row','${r}')" onmouseover="hOver('row','${r}')">${r}<div class="row-grabber" id="r-res-${r}"></div></th>`;
+            tr.innerHTML = rowHeader + ['A','B','C','D','E'].map(c => `<td id="${c}${r}" data-cell="${c}${r}" onmousedown="cDown('${c}${r}')" onmouseover="cOver('${c}${r}')">${(c+r === 'B2' && currentStep === 11) ? 'Edremit' : ''}</td>`).join('');
+            tbody.appendChild(tr);
+        }
+        setupResizers();
+        updateDisplay();
+    }
+
+    function hDown(type, val) {
+        isDragging = true; dragMode = type;
+        if(!keys.ctrl) clearAll();
+        applySelection(type, val);
+    }
+    function hOver(type, val) {
+        if(isDragging && dragMode === type) applySelection(type, val);
+    }
+
+    function cDown(id) {
+        isDragging = true; dragMode = 'cell';
+        if(currentStep === 10 && id === "B2") { startInput(id); return; }
+        if(!keys.ctrl && !keys.shift) clearAll();
+        if(currentStep === 4 && keys.shift) { tasks[4].target.forEach(t => toggle(t)); }
+        else toggle(id);
+    }
+    function cOver(id) {
+        if(isDragging && dragMode === 'cell') toggle(id);
+    }
+
+    function toggle(id) { 
+        if(document.getElementById(id)) {
+            document.getElementById(id).classList.add('selected'); 
+            selectedSet.add(id); 
+        }
+    }
+
+    function applySelection(type, val) {
+        selectedSet.add(val);
+        const selector = type === 'col' ? `[id^="${val}"]` : `#tr-${val} td`;
+        document.querySelectorAll(selector).forEach(td => td.classList.add('selected'));
+    }
+
+    function handleAllClick() { if(currentStep === 5) { document.querySelectorAll('td').forEach(td => td.classList.add('selected')); selectedSet.add('all-sel'); checkSuccess(); } }
+
+    function setupResizers() {
+        const cRes = document.getElementById('c-res');
+        if(cRes) cRes.onmousedown = (e) => {
+            if(currentStep !== 12) return;
+            isDragging = true; dragMode = 'resize';
+            document.onmousemove = (ev) => {
+                let w = ev.pageX - document.getElementById('h-C').offsetLeft;
+                if(w > 50) { document.getElementById('h-C').style.width = w + "px"; if(w > 140) { selectedSet.add('c-res'); checkSuccess(); } }
+            };
+        };
+        const rRes = document.getElementById('r-res-2');
+        if(rRes) rRes.onmousedown = (e) => {
+            if(currentStep !== 13) return;
+            isDragging = true; dragMode = 'resize';
+            document.onmousemove = (ev) => {
+                let h = ev.pageY - document.getElementById('tr-2').offsetTop;
+                if(h > 20) { document.getElementById('tr-2').style.height = h + "px"; if(h > 60) { selectedSet.add('r-res'); checkSuccess(); } }
+            };
+        };
+    }
+
+    function startInput(id) {
+        const cell = document.getElementById(id);
+        if(cell.querySelector('input')) return;
+        cell.innerHTML = `<input type="text" id="editInp">`;
+        const inp = document.getElementById('editInp');
+        inp.focus();
+        inp.onkeydown = e => { if(e.key === "Enter") { cell.innerText = inp.value; if(inp.value.toLowerCase() === "edremit") { selectedSet.add("inputDone"); checkSuccess(); } } };
+    }
+
+    document.addEventListener('keydown', e => { if(e.key === "Control") keys.ctrl = true; if(e.key === "Shift") keys.shift = true; });
+    document.addEventListener('keyup', e => { 
+        if(e.key === "Control") keys.ctrl = false; if(e.key === "Shift") keys.shift = false;
+        if(currentStep === 11 && (e.key === "Delete" || e.key === "Backspace")) {
+            const b2 = document.getElementById('B2');
+            if(b2.classList.contains('selected')) { b2.innerText = ""; selectedSet.add("deleted"); checkSuccess(); }
+        }
+    });
+
+    window.onmouseup = () => { isDragging = false; dragMode = null; document.onmousemove = null; checkSuccess(); };
+
+    function checkSuccess() {
+        const s = tasks[currentStep];
+        let ok = false;
+        if(Array.isArray(s.target)) ok = s.target.every(t => selectedSet.has(t));
+        else if(s.type === "all") ok = selectedSet.has('all-sel');
+        else if(s.type === "input") ok = selectedSet.has("inputDone");
+        else if(s.type === "delete") ok = selectedSet.has("deleted");
+        else if(s.type === "resize-col") ok = selectedSet.has('c-res');
+        else if(s.type === "resize-row") ok = selectedSet.has('r-res');
+        else ok = selectedSet.has(s.target);
+        if(ok) document.getElementById('nextBtn').disabled = false;
+    }
+
+    function clearAll() { selectedSet.clear(); document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected')); }
+    function updateDisplay() { document.getElementById('instruction').innerHTML = "Yönerge: " + tasks[currentStep].msg; document.getElementById('stepDisplay').innerText = `Sayfa: ${currentStep} / 13`; document.getElementById('nextBtn').disabled = true; }
+    function goToNextStep() { if(currentStep < 13) { currentStep++; selectedSet.clear(); initTable(); } else { alert("Tebrikler! Buraya kadar TAMAM."); location.reload(); } }
+
+    initTable();
+</script>
+</body>
+</html>
