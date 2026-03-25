@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilgisayar Giriş Modül Sınavı</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .quiz-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 650px; position: relative; }
+        h2 { color: #2c3e50; text-align: center; margin-top: 0; border-bottom: 3px solid #3498db; padding-bottom: 15px; }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .stats { background: #fff3f3; color: #d63031; padding: 8px 15px; border-radius: 20px; font-weight: bold; border: 1px solid #fab1a0; font-size: 0.9em; }
+        .progress { font-size: 0.9em; color: #7f8c8d; font-weight: bold; }
+        .question { font-size: 1.25em; margin-bottom: 20px; color: #2d3436; line-height: 1.4; font-weight: 600; min-height: 60px; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        button.opt-btn { padding: 14px; font-size: 1em; cursor: pointer; border: 2px solid #dfe6e9; border-radius: 8px; transition: all 0.2s ease; background: #fdfdfd; text-align: left; color: #2d3436; }
+        button.opt-btn:hover { background-color: #3498db; color: white; border-color: #3498db; transform: translateX(5px); }
+        
+        /* İpucu Alanı */
+        .hint-container { margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px; text-align: center; }
+        #hint-text { display: none; background: #e8f4fd; color: #2980b9; padding: 10px; border-radius: 5px; margin-top: 10px; font-style: italic; font-size: 0.95em; border-left: 4px solid #3498db; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: 0.3s; }
+        .hint-btn:hover { background: #7f8c8d; }
+
+        .result { text-align: center; display: none; }
+        .restart-btn { background: #27ae60; color: white; border: none; padding: 15px 40px; font-size: 1.1em; border-radius: 30px; cursor: pointer; margin-top: 25px; transition: background 0.3s; }
+        .restart-btn:hover { background: #219150; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-area">
+        <h2>BİLGİSAYARA GİRİŞ SINAVI</h2>
+        <div class="stats-bar">
+            <div class="progress">Soru: <span id="current-number">1</span> / 20</div>
+            <div class="stats">Hata: <span id="fail-count">0</span></div>
+        </div>
+        <div id="question-text" class="question"></div>
+        <div id="options-area" class="options"></div>
+        
+        <div class="hint-container">
+            <button class="hint-btn" onclick="toggleHint()">💡 İpucu Göster</button>
+            <div id="hint-text"></div>
+        </div>
+    </div>
+
+    <div id="result-area" class="result">
+        <h2 style="border-bottom: none; color: #27ae60;">Tebrikler!</h2>
+        <p style="font-size: 1.2em;">Sınavı başarıyla tamamladınız.</p>
+        <div style="background: #f1f2f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p id="final-stats" style="font-size: 1.1em; font-weight: bold; margin: 0;"></p>
+        </div>
+        <button class="restart-btn" onclick="resetGame()">Yeniden Başlat</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "1-Bilgisayarın hangi donanımında sorun olduğunu nereden görebiliriz?", a: ["Aygıt yöneticisi", "Paylaşım merkezi", "Görev çubuğu", "Güç ayarları"], c: 0, h: "Sistemdeki tüm parçaların (ekran kartı, klavye vb.) listelendiği yerdir." },
+        { q: "2-Her bilgisayarda mutlaka bulunması gereken programa ne isim verilir?", a: ["Yazılım", "Donanım", "İşletim sistemi", "Office"], c: 2, h: "Windows, Linux veya MacOS gibi ana yönetici yazılımdır." },
+        { q: "3-Aşağıdakilerden hangisi ip adresi olamaz?", a: ["192.168.1.101", "195.125.1.34", "192.111.11.1", "195.256.0.1"], c: 3, h: "IP adresindeki bölümler 255'ten büyük olamaz." },
+        { q: "4-Bilgisayar kapandığında içindeki bilgilerin silindiği bellek hangisidir?", a: ["Harddisk", "Bios", "RAM", "ROM"], c: 2, h: "Elektrik kesildiğinde veriyi tutamayan geçici hafızadır." },
+        { q: "5-Aşağıdaki işlemcilerden hangisi daha gelişmiştir?", a: ["Pentium IV", "Celeron", "İntel İ5", "Rayzen 3"], c: 2, h: "Modern bilgisayarlarda kullanılan i-serisi işlemciyi düşünün." },
+        { q: "6-Standart bir DVD’ nin kapasitesi ne kadardır?", a: ["7.7 GB", "5.7 GB", "6.7 GB", "4.7 GB"], c: 3, h: "CD'den (700MB) büyük, tek katmanlı standart bir medyadır." },
+        { q: "7-Windows’ da Shift+Delete tuşu ne için kullanılır?", a: ["Kesin Silme", "Geçici silme", "Kurtarma", "Kesin kurtarma"], c: 0, h: "Geri Dönüşüm Kutusuna göndermeden yapılan işlemdir." },
+        { q: "8-Bilgisayarın herhangi bir donanımının belli bir sürede otomatik olarak kapanması hangi seçenekle ilgilidir?", a: ["Görev çubuğu", "Güç ayarları", "Salt okunur", "Yönet"], c: 1, h: "Enerji tasarrufu ve pil kullanımı ile ilgili bölümdür." },
+        { q: "9-Hangisi bilgisayara bakım işlemlerinden değildir?", a: ["Disk birleştirme", "Disk temizleme", "Disk sıkıştırma", "Geri yükleme noktası"], c: 2, h: "Bu işlem bir dosyayı küçültmek içindir, sistem bakımı sayılmaz." },
+        { q: "10-Hangi eşleştirme yanlıştır?", a: ["Kopyala=Ctrl+C", "Gerial=Ctrl+Z", "Ad değiştir=F2", "Kaydet=Alt+S"], c: 3, h: "Kaydetme işlemi genellikle 'Save' kelimesinden gelen bir kısayola sahiptir." },
+        { q: "11-Windows ayarları nereden yapılır?", a: ["Görev çubuğu", "Denetim masası", "Ayar çubuğu", "Başlık çubuğu"], c: 1, h: "Bilgisayarı kontrol ettiğimiz ana paneldir." },
+        { q: "12-Aşağıdaki portlardan hangisinde Tak-ve- Çalıştır (Pnp) desteği vardır?", a: ["Ps/2", "Lpt1", "Com1", "Usb"], c: 3, h: "Evrensel bir bağlantı noktasıdır, flash bellekler buraya takılır." },
+        { q: "13-Klavyeden rakamları kullanmak için önce hangisine basılmalıdır?", a: ["Capslock", "ScrollLock", "Numlock", "Shift"], c: 2, h: "Sayısal tuş takımını aktif eden kilittir." },
+        { q: "14-Bilgisayarımızda gizli paylaşım olup olmadığını hangi seçenek ile görebiliriz?", a: ["Ayarla", "Yönet", "Birleştir", "Paylaşım"], c: 1, h: "Bilgisayarım simgesine sağ tıklandığında çıkan menüdedir." },
+        { q: "15-Sabit diskten 1 adet 512 MB ve 2 adet 256 MB’lık dosya silinirse, diskte boşalan kapasite GB cinsinden ne olur?", a: ["1280 GB", "1 GB", "1024 GB", "1,28 GB"], c: 1, h: "1024 MB tam olarak bir üst birime eşittir." },
+        { q: "16-Bilgisayarda gereksiz bilgilerin toplandığı klasör hangisidir?", a: ["Temp", "Program files", "Kullanıcı Klasörü", "Download"], c: 0, h: "'Temporary' (Geçici) kelimesinin kısaltmasıdır." },
+        { q: "17-PARDUS nedir?", a: ["Yerli işletim sistemi", "Müzik programı", "Resim programı", "Antivirüs programı"], c: 0, h: "TÜBİTAK tarafından geliştirilen milli yazılımımızdır." },
+        { q: "18-Bir dosyanın kapladığı alanı küçültmek için hangi program kullanılır?", a: ["Winzar", "Winrar", "Access", "İnfoPath"], c: 1, h: "Kitap logolu, dosyaları sıkıştıran programdır." },
+        { q: "19-Ekrandaki en küçük noktalara ne ad verilir?", a: ["Column", "Line", "Character", "Pixel"], c: 3, h: "Görüntü kalitesini belirleyen en küçük birimdir." },
+        { q: "20-Kapatılamayan programı kapatmak için hangisi kullanılır?", a: ["Görev çubuğu", "Görev yöneticisi", "Görev bölmesi", "Görev ayarla"], c: 1, h: "Ctrl+Alt+Delete ile ulaşılan sistem aracıdır." }
+    ];
+
+    let currentQuestionIndex = 0;
+    let fails = 0;
+
+    function loadQuestion() {
+        const qData = questions[currentQuestionIndex];
+        document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        // İpucunu gizle ve metni hazırla
+        document.getElementById('hint-text').style.display = 'none';
+        document.getElementById('hint-text').innerText = qData.h;
+        
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        qData.a.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index);
+            optionsArea.appendChild(btn);
+        });
+        document.getElementById('fail-count').innerText = fails;
+    }
+
+    function toggleHint() {
+        const hint = document.getElementById('hint-text');
+        hint.style.display = (hint.style.display === 'none' || hint.style.display === '') ? 'block' : 'none';
+    }
+
+    function checkAnswer(idx) {
+        if (idx === questions[currentQuestionIndex].c) {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        } else {
+            alert("Yanlış cevap! Sınav en başa dönüyor.");
+            fails++;
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-stats').innerText = `Sınav Tamamlandı! Toplam Hata Sayısı: ${fails}`;
+    }
+
+    function resetGame() {
+        currentQuestionIndex = 0;
+        fails = 0;
+        document.getElementById('quiz-area').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
+        loadQuestion();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>

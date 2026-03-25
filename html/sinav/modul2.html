@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İnternet ve e-Posta Yönetimi Sınavı</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .quiz-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 700px; position: relative; }
+        h2 { color: #2c3e50; text-align: center; margin-top: 0; border-bottom: 3px solid #e67e22; padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .stats { background: #fff5f5; color: #e74c3c; padding: 10px 20px; border-radius: 25px; font-weight: bold; border: 1px solid #ffcccc; font-size: 0.95em; }
+        .progress { font-size: 1em; color: #34495e; font-weight: bold; background: #ebf5fb; padding: 10px 20px; border-radius: 25px; border: 1px solid #d6eaf8; }
+        .question { font-size: 1.3em; margin-bottom: 25px; color: #2c3e50; line-height: 1.5; font-weight: 600; min-height: 70px; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button.opt-btn { padding: 16px; font-size: 1.05em; cursor: pointer; border: 2px solid #edeff0; border-radius: 10px; transition: all 0.25s ease; background: #fff; text-align: left; color: #2d3436; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        button.opt-btn:hover { background-color: #e67e22; color: white; border-color: #e67e22; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3); }
+        
+        .hint-container { margin-top: 25px; border-top: 2px dashed #eee; padding-top: 20px; text-align: center; }
+        #hint-text { display: none; background: #fff9db; color: #856404; padding: 15px; border-radius: 8px; margin-top: 15px; font-style: italic; font-size: 0.95em; border-left: 5px solid #f1c40f; line-height: 1.4; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 0.9em; transition: 0.3s; font-weight: bold; }
+        .hint-btn:hover { background: #7f8c8d; }
+
+        .result { text-align: center; display: none; padding: 20px; }
+        .restart-btn { background: #27ae60; color: white; border: none; padding: 18px 50px; font-size: 1.2em; border-radius: 35px; cursor: pointer; margin-top: 30px; transition: 0.3s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+        .restart-btn:hover { background: #219150; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-area">
+        <h2>İnternet ve e-Posta Yönetimi Sınavı</h2>
+        <div class="stats-bar">
+            <div class="progress">Soru: <span id="current-number">1</span> / 20</div>
+            <div class="stats">Hata (Başa Dönme): <span id="fail-count">0</span></div>
+        </div>
+        <div id="question-text" class="question"></div>
+        <div id="options-area" class="options"></div>
+        
+        <div class="hint-container">
+            <button class="hint-btn" onclick="toggleHint()">💡 İpucu Göster</button>
+            <div id="hint-text"></div>
+        </div>
+    </div>
+
+    <div id="result-area" class="result">
+        <h2 style="border-bottom: none; color: #27ae60;">MODÜL BAŞARIYLA TAMAMLANDI!</h2>
+        <p style="font-size: 1.3em; color: #34495e;">Tebrikler, tüm soruları doğru yanıtladınız.</p>
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin: 25px 0; border: 1px solid #dee2e6;">
+            <p id="final-stats" style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin: 0;"></p>
+        </div>
+        <button class="restart-btn" onclick="resetGame()">Sınavı Yeniden Başlat</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "1- Hangisi ağ kartıdır?", a: ["Modem", "Hub", "Ethernet", "Switch"], c: 2, h: "Bilgisayarın kablolu ağa bağlanmasını sağlayan donanım bileşenidir." },
+        { q: "2- Hangisi güvenlik sertifikasıdır?", a: ["DSL", "SSL", "LSS", "SLS"], c: 1, h: "Web sitelerinin adres çubuğunda kilit simgesi çıkmasını sağlayan protokoldür." },
+        { q: "3- Aşağıdakilerden hangisi kişisel bir e-mail adresine örnektir?", a: ["ahmet_keskin@gmail.com", "şasmaz_ali@gmail.com", "http://meb@gov.tr", "www.kullaniciadi@hotmail.com"], c: 0, h: "Geçerli bir e-posta adresi başında 'www' veya 'http' barındırmaz ve TÜRKÇE katakter kullanılmaz" },
+        { q: "4- İnternet kullanıcılarının birbirleri ile haberleşmesini sağlayan protokol hangisidir?", a: ["FTP Protokolü", "TCP/IP Protokolü", "WWW", "E-mail"], c: 1, h: "İnternetin temel veri iletim kuralıdır." },
+        { q: "5- İnternette insanlarla sohbet etmek için kullanılan ifade hangisidir?", a: ["Web", "E-mail", "Chat", "Download"], c: 2, h: "Türkçe karşılığı 'sohbet' olan İngilizce kelimedir." },
+        { q: "6- Arama yapmak için kullanılan bir arama motoruna örnek hangisidir?", a: ["www.hotmail.com", "www.meb.gov.tr", "www.gittigidiyor.com", "www.yaani.com"], c: 3, h: "Türkiye tabanlı yerli arama motorunu seçiniz." },
+        { q: "7- Kâr amacı olmayan kuruluşa ait internet adresi uzantısı hangisidir?", a: [".com", ".edu", ".mil", ".org"], c: 3, h: "'Organization' kelimesinin kısaltmasıdır." },
+        { q: "8- Bağlı olduğumuz web sayfasını yenilemek için hangi klavye tuşu kullanılır?", a: ["F1", "F2", "F4", "F5"], c: 3, h: "Tarayıcıda sayfayı tazeleyen fonksiyon tuşudur." },
+        { q: "9- Eğitim kurumlarına ait bir web sayfasının adresine örnek hangisidir?", a: ["www.tdb.org.tr", "www.hotmail.com", "www.sakarya.edu.tr", "www.ttnet.net.tr"], c: 2, h: "'Education' kelimesinin kısaltması olan uzantıyı bulun." },
+        { q: "10- Aşağıdakilerden hangisi bir internet tarayıcı programı değildir?", a: ["Internet Explorer", "Mozilla Firefox", "Google Chrome", "Microsoft Ofis 2010"], c: 3, h: "Bu bir ofis paketidir, internette gezinti aracı değildir." },
+        { q: "11- Adres satırını tamamlama kısayolu hangisidir?", a: ["Ctrl+Enter", "Alt+Enter", "Ctrl+Esc", "AltGr+Enter"], c: 0, h: "Yazılan kelimenin başına www ve sonuna .com ekler." },
+        { q: "12- Hangi seçenek ile başlayan site güvenlidir?", a: ["http://", "https://", "www.", "http://www."], c: 1, h: "'Secure' anlamına gelen 's' harfinin olduğu protokolü seçin." },
+        { q: "13- İnternette bilgiler nerede tutulmaktadır?", a: ["Host", "Domain", "Web", "Tarayıcı"], c: 0, h: "Web sitelerinin dosyalarının barındırıldığı yerdir." },
+        { q: "14- İnternet sitesinin ismine ne denir?", a: ["Host", "Domain", "Web", "Tarayıcı"], c: 1, h: "Sitenin alan adı anlamına gelen teknik terimdir." },
+        { q: "15- Bağlandığımız sitenin görsel yapısına ne isim verilir?", a: ["Hosting", "Domain", "Web tasarım", "Arama motoru"], c: 2, h: "Sitenin görünümü ve düzenini oluşturan çalışmadır." },
+        { q: "16- Ses sinyallerini bilgisayar sinyallerine çeviren donanım hangisidir?", a: ["Telefon", "Modem", "Switch", "Splitter"], c: 1, h: "İnternete bağlanmak için kullanılan ana cihazdır." },
+        { q: "17- Ağ geçit numaramızı gösteren komut hangisidir?", a: ["Config", "Msconfig", "ipconfig", "Dnsconfig"], c: 2, h: "Komut isteminde IP bilgilerini listeler." },
+        { q: "18- İnternette bilgisayarımızın aldığı numara nedir?", a: ["ip", "Dns", "Ağ numarası", "Ağ geçidi"], c: 0, h: "İnternet protokol adresi." },
+        { q: "19- İnternetten resim indirmek için hangi seçenek kullanılır?", a: ["Bağlantıyı farklı kaydet", "Sayfayı kaydet", "Başvuruyu kaydet", "Resmi farklı kaydet"], c: 3, h: "Sağ tıklama menüsünde resmi kaydetmeye yarayan seçenek." },
+        { q: "20- İnternet güvenliğiyle ilgili hangisi yanlıştır?", a: ["İnternette bedavalardan kaçınız.", "Okumadan anlamadan onaylamayınız.", "Siteler güvenlidir zarar gelmez.", "Girdiğimiz sitede izimiz kalır."], c: 2, h: "Her internet sitesinin masum olduğu düşüncesi bir yanılgıdır." }
+    ];
+
+    let currentQuestionIndex = 0;
+    let fails = 0;
+
+    function loadQuestion() {
+        const qData = questions[currentQuestionIndex];
+        document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        document.getElementById('hint-text').style.display = 'none';
+        document.getElementById('hint-text').innerText = qData.h;
+        
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        qData.a.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index);
+            optionsArea.appendChild(btn);
+        });
+        document.getElementById('fail-count').innerText = fails;
+    }
+
+    function toggleHint() {
+        const hint = document.getElementById('hint-text');
+        hint.style.display = (hint.style.display === 'none' || hint.style.display === '') ? 'block' : 'none';
+    }
+
+    function checkAnswer(idx) {
+        if (idx === questions[currentQuestionIndex].c) {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        } else {
+            alert("Yanlış cevap! Başa dönüyorsunuz.");
+            fails++;
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-stats').innerText = `Toplam ${fails} kez hata yaparak sınavı bitirdiniz.`;
+    }
+
+    function resetGame() {
+        currentQuestionIndex = 0;
+        fails = 0;
+        document.getElementById('quiz-area').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
+        loadQuestion();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>

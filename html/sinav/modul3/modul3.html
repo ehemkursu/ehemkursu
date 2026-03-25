@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelime İşlemci (Word) Modül Sınavı</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .quiz-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 700px; position: relative; }
+        h2 { color: #2c3e50; text-align: center; margin-top: 0; border-bottom: 3px solid #2980b9; padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .stats { background: #fff5f5; color: #e74c3c; padding: 10px 20px; border-radius: 25px; font-weight: bold; border: 1px solid #ffcccc; font-size: 0.95em; }
+        .progress { font-size: 1em; color: #34495e; font-weight: bold; background: #eaf2f8; padding: 10px 20px; border-radius: 25px; border: 1px solid #d4e6f1; }
+        .question { font-size: 1.25em; margin-bottom: 25px; color: #2c3e50; line-height: 1.5; font-weight: 600; min-height: 70px; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button.opt-btn { padding: 16px; font-size: 1.05em; cursor: pointer; border: 2px solid #edeff0; border-radius: 10px; transition: all 0.25s ease; background: #fff; text-align: left; color: #2d3436; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; }
+        button.opt-btn:hover { background-color: #2980b9; color: white; border-color: #2980b9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(41, 128, 185, 0.3); }
+        .opt-img { width: 32px; height: 32px; object-fit: contain; background: white; padding: 2px; border-radius: 4px; border: 1px solid #eee; }
+        
+        .hint-container { margin-top: 25px; border-top: 2px dashed #eee; padding-top: 20px; text-align: center; }
+        #hint-text { display: none; background: #fff9db; color: #856404; padding: 15px; border-radius: 8px; margin-top: 15px; font-style: italic; font-size: 0.95em; border-left: 5px solid #f1c40f; line-height: 1.4; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 0.9em; transition: 0.3s; font-weight: bold; }
+        .hint-btn:hover { background: #7f8c8d; }
+
+        .result { text-align: center; display: none; padding: 20px; }
+        .restart-btn { background: #27ae60; color: white; border: none; padding: 18px 50px; font-size: 1.2em; border-radius: 35px; cursor: pointer; margin-top: 30px; transition: 0.3s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+        .restart-btn:hover { background: #219150; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-area">
+        <h2>KELİME İŞLEMCİ (WORD) SINAVI</h2>
+        <div class="stats-bar">
+            <div class="progress">Soru: <span id="current-number">1</span> / 20</div>
+            <div class="stats">Hata (Başa Dönme): <span id="fail-count">0</span></div>
+        </div>
+        <div id="question-text" class="question"></div>
+        <div id="options-area" class="options"></div>
+        
+        <div class="hint-container">
+            <button class="hint-btn" onclick="toggleHint()">💡 İpucu Göster</button>
+            <div id="hint-text"></div>
+        </div>
+    </div>
+
+    <div id="result-area" class="result">
+        <h2 style="border-bottom: none; color: #27ae60;">SINAV TAMAMLANDI!</h2>
+        <p style="font-size: 1.3em; color: #34495e;">Word modülünü başarıyla bitirdiniz.</p>
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin: 25px 0; border: 1px solid #dee2e6;">
+            <p id="final-stats" style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin: 0;"></p>
+        </div>
+        <button class="restart-btn" onclick="resetGame()">Yeniden Başlat</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "1- Microsoft Word programında kâğıt boyutu, kenar boşlukları ile ilgili işlemlerin yapıldığı menü hangisidir?", a: [{t: "Sayfa düzeni"} , {t: "Sayfa yapısı"}, {t: "Görünüm"}, {t: "Giriş"}], c: 0, h: "Sayfanın genel yapısını ve sınırlarını belirleyen bölümdür." },
+        { q: "2- Tablodaki birkaç hücreyi tek hücre haline getiren komut aşağıdakilerden hangisidir?", a: [{t: "Hücreleri birleştir"}, {t: "Hücreleri böl"}, {t: "Tabloyu böl"}, {t: "Otomatik sığdır"}], c: 0, h: "Ayrı hücreleri tek bir bütün haline getirir." },
+        { q: "3- Aşağıdakilerden hangisi Microsoft Word programı ile aynı pakette değildir?", a: [{t: "Excel"}, {t: "Outlook"}, {t: "Photofiltre"}, {t: "Powerpoint"}], c: 2, h: "Office paketi dışındaki harici bir fotoğraf programıdır." },
+        { 
+            q: "4- Aşağıdaki eşleştirmelerden hangisi doğrudur?", 
+            a: [
+                {t: "Şekil", img: "s1.png"}, 
+                {t: "Simge", img: "s2.png"}, 
+                {t: "Wordart", img: "s3.png"}, 
+                {t: "Grafik", img: "s4.png"}
+            ], 
+            c: 0, 
+            h: "Kare, daire ve silindir görsellerinin olduğu düğme şekil ekler." 
+        },
+        { q: "5- Word programında bir kelime üzerinde üç tıklama ne işe yarar?", a: [{t: "Paragrafı seçer"}, {t: "Kelimeyi seçer"}, {t: "Tüm belgeyi seçer"}, {t: "Satırı seçer"}], c: 0, h: "İmlecin bulunduğu tüm metin bloğunu (paragrafı) işaretler." },
+        { 
+            q: "6- Yandaki düğmenin adı nedir?", 
+            a: [
+                {t: "Wordart", img: "tip.png"}, 
+                {t: "Metin efektleri ve tipografi", img: "tip.png"}, 
+                {t: "Metin vurgu rengi", img: "tip.png"}, 
+                {t: "Gölgelendirme", img: "tip.png"}
+            ], 
+            c: 1, 
+            h: "Işıltılı 'A' harfi sanatsal metin efektleri içindir." 
+        },
+        { 
+            q: "7- Yandaki butonun görevi nedir?", 
+            a: [
+                {t: "Taşıma", img: "cut.png"}, 
+                {t: "Kaydetme", img: "cut.png"}, 
+                {t: "Kopyalama", img: "cut.png"}, 
+                {t: "Yapıştırma", img: "cut.png"}
+            ], 
+            c: 0, 
+            h: "Makas simgesi metni bulunduğu yerden kesip taşımak içindir." 
+        },
+        { q: "8- Word programında her sayfanın üstünde tekrarlanması istenen bilgiler için hangi işlem doğrudur?", a: [{t: "Giriş / Üst bilgi"}, {t: "Ekle / Üstbilgi"}, {t: "Sayfa düzeni / Üstbilgi"}, {t: "Görünüm / Üstbilgi"}], c: 1, h: "Sayfa başına sürekli bilgi yerleştirmek için 'Ekle' menüsü kullanılır." },
+        { q: "9- Yazıyı sütunlara bölme hangi menüdedir?", a: [{t: "Giriş"}, {t: "Sayfa Düzeni"}, {t: "Başvurular"}, {t: "Biçim"}], c: 1, h: "Gazete tarzı sütun yapısı bu menüden ayarlanır." },
+        { q: "10- Sayfanın dikey – yatay olmasının ayarlandığı seçeneğin adı nedir?", a: [{t: "Düzenle"}, {t: "Kenar boşlukları"}, {t: "Boyut"}, {t: "Yönlendirme"}], c: 3, h: "Kağıdın yönünü belirleyen seçenektir." },
+        { 
+            q: "11- Yandaki düğmenin görevi nedir?", 
+            a: [
+                {t: "Aç", img: "silgi.png"}, 
+                {t: "Kaydet", img: "silgi.png"}, 
+                {t: "Temizle", img: "silgi.png"}, 
+                {t: "Sırala", img: "silgi.png"}
+            ], 
+            c: 2, 
+            h: "Silgi ve 'A' harfi simgesi tüm biçimlendirmeyi temizleyip metni yalın hale getirir." 
+        },
+        { q: "12- Aşağıdakilerden hangisi Tablo ile birlikte aktif olan menülerden biridir?", a: [{t: "Giriş"}, {t: "Sayfa düzeni"}, {t: "Düzen"}, {t: "Görünüm"}], c: 2, h: "Tablo araçları altındaki tasarım veya düzen sekmeleridir." },
+        { q: "13- Word ekranında çizilen bir resmi yazının arkasına taşımak için hangi yöntem kullanılır?", a: [{t: "Konum"}, {t: "Hizala"}, {t: "Metni kaydır"}, {t: "Döndür"}], c: 2, h: "Metin ve nesne katman ilişkisini düzenler." },
+        { 
+            q: "14- Yandaki düğmenin görevi nedir?", 
+            a: [
+                {t: "Sayfa sütunlara böler", img: "madde.png"}, 
+                {t: "Madde işareti koyar", img: "madde.png"}, 
+                {t: "Artan sıralama yapar", img: "madde.png"}, 
+                {t: "Sayfa Numarası ekler", img: "madde.png"}
+            ], 
+            c: 1, 
+            h: "Noktalı liste simgesi satır başlarına madde ekler." 
+        },
+        { 
+            q: "15- Aşağıdakilerden hangisi hazırlanan belgenin satır aralıklarını düzenler?", 
+            a: [
+                {t: "a)", img: "paragraf.png"}, 
+                {t: "b)", img: "numara.png"}, 
+                {t: "c)", img: "sirala.png"}, 
+                {t: "d)", img: "kaydir.png"}
+            ], 
+            c: 0, 
+            h: "Paragraf içindeki dikey oklar satır aralığını temsil eder." 
+        },
+        { q: "16- Aşağıdaki seçeneklerden hangisi bir sekme türü değildir?", a: [{t: "Ondalık sekme"}, {t: "Sol sekme"}, {t: "Yukarı sekme"}, {t: "Orta sekme"}], c: 2, h: "Cetvel sekmelerinde dikey yönlü (yukarı) bir hizalama yoktur." },
+        { 
+            q: "17- Bir tabloda hücre içindeki metnin yönünü değiştiren düğme hangisidir?", 
+            a: [
+                {t: "a)", img: "yon.png"}, 
+                {t: "b)", img: "hizala.png"}, 
+                {t: "c)", img: "girinti.png"}, 
+                {t: "d)", img: "tablo.png"}
+            ], 
+            c: 0, 
+            h: "Yandaki 'A' harfi ve yön okları metni hücre içinde döndürmeye yarayan simgedir." 
+        },
+        { q: "18- Word programında yapılan bir çalışmanın uzantısı hangisi olabilir?", a: [{t: ".XLS"}, {t: ".PPT"}, {t: ".DOC"}, {t: ".PNG"}], c: 2, h: "Belge (Document) kelimesinin kısaltılmış halidir." },
+        { q: "19- Word programında içindekiler sayfası hangi menüden eklenir?", a: [{t: "Ekle"}, {t: "Başvurular"}, {t: "Tasarım"}, {t: "Eklentiler"}], c: 1, h: "Referanslar ve dizin işlemlerinin merkezidir." },
+        { q: "20- Cetvel hangi menüden iptal edilir ve kaldırılır?", a: [{t: "Sayfa Düzeni"}, {t: "Gözden Geçir"}, {t: "Ekle"}, {t: "Görünüm"}], c: 3, h: "Arayüz elemanlarının görünürlüğünü yönetir." }
+    ];
+
+    let currentQuestionIndex = 0;
+    let fails = 0;
+
+    function loadQuestion() {
+        const qData = questions[currentQuestionIndex];
+        document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        document.getElementById('hint-text').style.display = 'none';
+        document.getElementById('hint-text').innerText = qData.h;
+        
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        qData.a.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            
+            if(opt.img) {
+                const img = document.createElement('img');
+                img.src = opt.img;
+                img.className = 'opt-img';
+                img.alt = opt.t;
+                btn.appendChild(img);
+            }
+            
+            const text = document.createElement('span');
+            text.innerText = opt.t;
+            btn.appendChild(text);
+            
+            btn.onclick = () => checkAnswer(index);
+            optionsArea.appendChild(btn);
+        });
+        document.getElementById('fail-count').innerText = fails;
+    }
+
+    function toggleHint() {
+        const hint = document.getElementById('hint-text');
+        hint.style.display = (hint.style.display === 'none' || hint.style.display === '') ? 'block' : 'none';
+    }
+
+    function checkAnswer(idx) {
+        if (idx === questions[currentQuestionIndex].c) {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        } else {
+            alert("Yanlış cevap! Başa dönüyorsunuz.");
+            fails++;
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-stats').innerText = `Sınav Bitti! Toplam Başa Dönme Sayısı: ${fails}`;
+    }
+
+    function resetGame() {
+        currentQuestionIndex = 0;
+        fails = 0;
+        document.getElementById('quiz-area').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
+        loadQuestion();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
