@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitimi</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 800px; margin-top: 10px; }
+        
+        .info-panel { background: #fffde7; border-left: 5px solid #fbc02d; padding: 15px; margin-bottom: 10px; color: #333; font-weight: 600; font-size: 15px; }
+        
+        /* Grid Yapısı */
+        .excel-frame { border: 1px solid #ccc; background: #fff; overflow: auto; position: relative; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 35px; text-align: center; font-size: 14px; position: relative; background: white; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Önemli Hücreler */
+        #D2, #D3 { background-color: #f0fdf4; border: 1px solid #86efac; }
+
+        /* Seçim ve Kulp */
+        .selected { background-color: rgba(33, 115, 70, 0.15) !important; outline: 2px solid var(--excel-green); z-index: 5; }
+        .handle { 
+            position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; 
+            background: var(--excel-green); border: 1px solid white; cursor: crosshair; z-index: 10; display: none; 
+        }
+        .show-handle .handle { display: block; }
+
+        /* Veri Giriş Kutusu - Tam Hücre Boyutu */
+        .cell-edit { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            border: 2px solid var(--excel-green); box-sizing: border-box; 
+            text-align: center; font-size: 14px; z-index: 100; outline: none; background: white; 
+        }
+
+        .controls { margin-top: 15px; text-align: right; }
+        button { padding: 10px 30px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #050505;
+}
+a:link {
+    color: #F5EEEE;
+}
+a:visited {
+    color: #F4EAEA;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="info-panel" id="instr">
+        Yönerge: <b>D2</b> hücresine tıklayın ve <b>1</b> yazıp <b>Enter</b>'a basın.
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table" id="grid">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+  <div class="controls">
+        <button id="nextBtn" enable><a href="17.html" target="_parent">Sonraki Adım (17) →</a></button>
+    </div>
+</div>
+
+<script>
+    let currentTask = "D2_INPUT"; // D2_INPUT, D3_INPUT, SELECT, DRAG
+    let isMouseDown = false;
+    let selectedSet = new Set();
+    const seriesData = { 2:1, 3:4, 4:7, 5:10, 6:13, 7:16 };
+
+    function init() {
+        const body = document.getElementById('tbody');
+        body.innerHTML = '';
+        for (let r = 1; r <= 10; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => 
+                `<td id="${c}${r}" onmousedown="tdDown('${c}${r}')" onmouseover="tdOver('${c}${r}')"></td>`
+            ).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function tdDown(id) {
+        // VERİ GİRİŞİ BAŞLATMA
+        if (currentTask === "D2_INPUT" && id === "D2") {
+            startEdit(id, 1, "D3_INPUT", "Şimdi <b>D3</b> hücresine tıklayın ve <b>4</b> yazıp <b>Enter</b>'a basın.");
+            return;
+        }
+        if (currentTask === "D3_INPUT" && id === "D3") {
+            startEdit(id, 4, "SELECT", "Harika! Şimdi fareyle <b>D2 ve D3</b> hücrelerini birlikte seçin.");
+            return;
+        }
+
+        // SEÇİM BAŞLATMA
+        if (currentTask === "SELECT" || currentTask === "DRAG") {
+            isMouseDown = true;
+            clearSel();
+            select(id);
+        }
+    }
+
+    function tdOver(id) {
+        if (isMouseDown && currentTask === "SELECT") {
+            select(id);
+            if (selectedSet.has("D2") && selectedSet.has("D3")) {
+                showHandle("D3");
+            }
+        }
+    }
+
+    function startEdit(id, target, nextTask, nextText) {
+        const cell = document.getElementById(id);
+        const inp = document.createElement('input');
+        inp.type = "text";
+        inp.className = "cell-edit";
+        cell.appendChild(inp);
+        
+        // Kritik Odaklanma Zamanlayıcısı
+        setTimeout(() => { inp.focus(); }, 10);
+
+        inp.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                if (parseInt(inp.value) === target) {
+                    cell.innerText = inp.value;
+                    currentTask = nextTask;
+                    document.getElementById('instr').innerHTML = nextText;
+                } else {
+                    cell.innerText = inp.value;
+                }
+            }
+        };
+    }
+
+    function select(id) {
+        document.getElementById(id).classList.add('selected');
+        selectedSet.add(id);
+    }
+
+    function clearSel() {
+        selectedSet.clear();
+        document.querySelectorAll('td').forEach(td => td.classList.remove('selected', 'show-handle'));
+    }
+
+    function showHandle(id) {
+        const cell = document.getElementById(id);
+        cell.classList.add("show-handle");
+        if (!cell.querySelector('.handle')) {
+            const h = document.createElement('div');
+            h.className = "handle";
+            h.onmousedown = (e) => {
+                e.stopPropagation();
+                currentTask = "DRAG";
+                startFill();
+            };
+            cell.appendChild(h);
+        }
+    }
+
+    function startFill() {
+        document.getElementById('instr').innerHTML = "Şimdi yeşil kulptan tutarak <b>D7</b>'ye kadar aşağı çekin.";
+        isMouseDown = false;
+        
+        document.getElementById('grid').onmouseover = (e) => {
+            const id = e.target.id;
+            if (id && id.startsWith("D")) {
+                const row = parseInt(id.substring(1));
+                if (row >= 4 && row <= 7) {
+                    for (let i = 4; i <= row; i++) {
+                        const c = document.getElementById("D" + i);
+                        c.innerText = seriesData[i];
+                        c.classList.add("selected");
+                    }
+                    if (row === 7) {
+                        document.getElementById('nextBtn').disabled = false;
+                        document.getElementById('grid').onmouseover = null;
+                    }
+                }
+            }
+        };
+    }
+
+    window.onmouseup = () => { isMouseDown = false; };
+    init();
+</script>
+</body>
+</html>

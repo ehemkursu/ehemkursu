@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Eğitim - Hücre Biçimlendirme</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 900px; margin-top: 10px; }
+        
+        /* Ribbon Menü */
+        .toolbar { display: flex; background: #f3f3f3; padding: 10px; border: 1px solid #ccc; gap: 15px; align-items: center; border-bottom: 2px solid #ddd; }
+        .tool-group { display: flex; border-right: 1px solid #bbb; padding-right: 10px; gap: 8px; }
+        .btn-tool { padding: 6px; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 11px; min-width: 65px; border-radius: 4px; transition: 0.2s; }
+        .btn-tool:hover { background: #e2e8f0; border: 1px solid var(--excel-green); }
+        .btn-tool span { font-size: 18px; margin-bottom: 3px; }
+
+        .info-panel { background: #fffde7; border-left: 5px solid #fbc02d; padding: 15px; margin: 10px 0; color: #333; font-weight: 600; font-size: 15px; }
+        
+        /* Excel Grid */
+        .excel-frame { border: 1px solid #ccc; background: #fff; overflow: auto; position: relative; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 35px; text-align: center; font-size: 14px; position: relative; background: white; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Durum Sınıfları */
+        .selected { outline: 2px solid var(--excel-green); z-index: 10; background-color: rgba(33, 115, 70, 0.05) !important; }
+        .fill-red { background-color: #FF0000 !important; }
+        .font-white { color: #FFFFFF !important; font-weight: bold; }
+
+        /* Input Kutusu */
+        .cell-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid var(--excel-green); box-sizing: border-box; text-align: center; font-size: 14px; z-index: 100; outline: none; background: white; }
+
+        .controls { margin-top: 15px; text-align: right; }
+        button#nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="toolbar">
+        <div class="tool-group">
+            <button class="btn-tool" onclick="applyFormat('fill')"><span>🎨</span>Dolgu (Kırmızı)</button>
+            <button class="btn-tool" onclick="applyFormat('font')"><span>🅰️</span>Yazı (Beyaz)</button>
+        </div>
+        <div style="font-size: 12px; color: #666;">Giriş Sekmesi / Biçimlendirme</div>
+    </div>
+
+    <div class="info-panel" id="instruction">
+        Yönerge: <b>B5</b> hücresine tıklayın, <b>TÜRKİYE</b> yazın ve <b>Enter</b>'a basın. Ardından yukarıdaki butonlarla dolguyu kırmızı, yazı rengini beyaz yapın.
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="nextBtn" enable><a href="18.html" target="_parent">Sonraki Adım (18) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    let isTextOk = false;
+    let isFillOk = false;
+    let isFontOk = false;
+    let selectedId = null;
+
+    function init() {
+        const body = document.getElementById('tbody');
+        for (let r = 1; r <= 10; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => 
+                `<td id="${c}${r}" onclick="cellClick('${c}${r}')"></td>`
+            ).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function cellClick(id) {
+        // Eski seçimi temizle
+        if (selectedId) document.getElementById(selectedId).classList.remove('selected');
+        
+        selectedId = id;
+        const cell = document.getElementById(id);
+        cell.classList.add('selected');
+
+        // Sadece B5 hücresine metin girişine izin ver
+        if (id === "B5" && !isTextOk) {
+            startInput(cell);
+        }
+    }
+
+    function startInput(cell) {
+        if (cell.querySelector('input')) return;
+        const inp = document.createElement('input');
+        inp.className = "cell-input";
+        cell.appendChild(inp);
+        setTimeout(() => inp.focus(), 10);
+
+        inp.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                const val = inp.value.trim().toUpperCase();
+                cell.innerText = val;
+                if (val === "TÜRKİYE") {
+                    isTextOk = true;
+                    document.getElementById('instruction').innerHTML = "Harika! Şimdi B5 seçili iken yukarıdan <b>Dolgu</b> ve <b>Yazı</b> renklerini değiştirin.";
+                }
+            }
+        };
+    }
+
+    function applyFormat(type) {
+        if (!selectedId || selectedId !== "B5" || !isTextOk) return;
+
+        const cell = document.getElementById(selectedId);
+        if (type === 'fill') {
+            cell.classList.add('fill-red');
+            isFillOk = true;
+        }
+        if (type === 'font') {
+            cell.classList.add('font-white');
+            isFontOk = true;
+        }
+
+        checkSuccess();
+    }
+
+    function checkSuccess() {
+        if (isTextOk && isFillOk && isFontOk) {
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('instruction').innerHTML = "Tebrikler! Biçimlendirme tamamlandı. Sonraki adıma geçebilirsiniz.";
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

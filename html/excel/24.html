@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim - Metni Kaydır</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 900px; margin-top: 10px; }
+        
+        /* Ribbon Toolbar */
+        .toolbar { display: flex; background: #f3f3f3; padding: 10px; border: 1px solid #ccc; gap: 15px; align-items: center; border-bottom: 2px solid #ddd; }
+        .btn-tool { padding: 8px 15px; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 11px; min-width: 100px; border-radius: 4px; transition: 0.2s; }
+        .btn-tool:hover { background: #e2e8f0; border-color: var(--excel-green); }
+        .btn-tool span { font-size: 20px; margin-bottom: 3px; }
+
+        .info-panel { background: #fffbeb; border-left: 5px solid #f59e0b; padding: 15px; margin: 10px 0; color: #92400e; font-weight: 600; font-size: 15px; }
+        
+        /* Excel Grid */
+        .excel-frame { border: 1px solid #ccc; background: #fff; overflow: auto; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 110px; height: 35px; text-align: center; font-size: 13px; position: relative; background: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Metin Kaydırma Efekti */
+        .wrapped { 
+            white-space: normal !important; 
+            overflow: visible !important; 
+            word-wrap: break-word; 
+            line-height: 1.2; 
+            height: 70px !important; /* Hücre dikeyde genişler */
+            vertical-align: middle;
+            text-align: left !important;
+            padding: 5px !important;
+        }
+
+        .selected { outline: 2px solid var(--excel-green); z-index: 10; background-color: rgba(33, 115, 70, 0.05) !important; }
+
+        /* Input Kutusu */
+        .cell-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid var(--excel-green); box-sizing: border-box; text-align: center; font-size: 13px; z-index: 100; outline: none; background: white; }
+
+        .controls { margin-top: 20px; text-align: right; }
+        button#nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #010101;
+}
+a:link {
+    color: #F8F3F3;
+}
+a:visited {
+    color: #F4EFEF;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="toolbar">
+        <button class="btn-tool" onclick="applyWrap()">
+            <span>↩️</span> Metni Kaydır
+        </button>
+        <div style="font-size: 12px; color: #666; margin-left: 10px;">Hizalama</div>
+    </div>
+
+    <div class="info-panel" id="instr">
+        Yönerge: <b>D5</b> hücresine tıklayın, <b>EDREMİT HALK EĞİTİMİ MERKEZİ BİLGİSAYAR KURSU</b> yazın ve <b>Enter</b>'a basın. Metin hücreye sığmayacaktır. Ardından yukarıdaki <b>Metni Kaydır</b> butonuna basın.
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="nextBtn" enable><a href="25.html" target="_parent">Sonraki Adım (25) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    let isTextEntered = false;
+    let selectedId = null;
+    const targetText = "EDREMİT HALK EĞİTİMİ MERKEZİ BİLGİSAYAR KURSU";
+
+    function init() {
+        const body = document.getElementById('tbody');
+        for (let r = 1; r <= 10; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => 
+                `<td id="${c}${r}" onclick="cellClick('${c}${r}')"></td>`
+            ).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function cellClick(id) {
+        if (selectedId) document.getElementById(selectedId).classList.remove('selected');
+        selectedId = id;
+        const cell = document.getElementById(id);
+        cell.classList.add('selected');
+
+        if (id === "D5" && !isTextEntered) {
+            startInput(cell);
+        }
+    }
+
+    function startInput(cell) {
+        if (cell.querySelector('input')) return;
+        const inp = document.createElement('input');
+        inp.className = "cell-input";
+        cell.appendChild(inp);
+        setTimeout(() => inp.focus(), 10);
+
+        inp.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                const val = inp.value.trim().toUpperCase();
+                cell.innerText = val;
+                if (val === targetText) {
+                    isTextEntered = true;
+                    document.getElementById('instr').innerHTML = "Harika! Metin sığmadı ve kesik görünüyor. Şimdi <b>Metni Kaydır</b> butonuna basarak hücreyi genişletin.";
+                }
+                inp.remove();
+            }
+        };
+    }
+
+    function applyWrap() {
+        if (!selectedId || selectedId !== "D5" || !isTextEntered) {
+            alert("Lütfen önce D5 hücresine metni yazın.");
+            return;
+        }
+
+        const cell = document.getElementById('D5');
+        cell.classList.add('wrapped');
+        
+        document.getElementById('nextBtn').disabled = false;
+        document.getElementById('instr').innerHTML = "Tebrikler! Metin başarıyla kaydırıldı ve hücre yüksekliği otomatik ayarlandı.";
+        document.getElementById('instr').style.background = "#dcfce7";
+        document.getElementById('instr').style.color = "#166534";
+    }
+
+    init();
+</script>
+</body>
+</html>

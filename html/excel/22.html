@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim - Sayfalar Arası Veri Aktarma</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 850px; margin-top: 10px; }
+        
+        .info-panel { background: #fff7ed; border-left: 5px solid #f97316; padding: 15px; margin-bottom: 15px; color: #9a3412; font-weight: 600; font-size: 14px; }
+        
+        /* Grid */
+        .excel-frame { border: 1px solid #ccc; background: #fff; position: relative; min-height: 250px; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 35px; text-align: center; font-size: 14px; position: relative; background: white; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Sayfa Sekmeleri */
+        .sheet-tabs { display: flex; background: #f3f3f3; border: 1px solid #ccc; border-top: none; padding: 0 10px; height: 35px; align-items: flex-end; }
+        .tab { padding: 4px 20px; border: 1px solid #ccc; background: #e2e8f0; margin-right: 2px; font-size: 12px; cursor: pointer; border-bottom: none; border-radius: 4px 4px 0 0; }
+        .tab.active { background: #fff; font-weight: bold; border-top: 3px solid var(--excel-green); }
+
+        /* Formül Input */
+        .formula-input { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            border: 2px solid var(--excel-green); box-sizing: border-box; 
+            text-align: center; font-size: 14px; outline: none; z-index: 100; background: white; 
+        }
+
+        .controls { margin-top: 20px; text-align: right; }
+        #nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #nextBtn:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #0A0A0A;
+}
+    a:link {
+    color: #FCF9F9;
+}
+a:visited {
+    color: #F5EEEE;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="info-panel" id="instr">
+        Yönerge: Şu an <b>ALACAK</b> sayfasındasınız. <br>
+        <b>B5</b> hücresine tıklayın ve <b>=BORÇ!A5</b> yazıp <b>Enter</b>'a basın. (BORÇ sayfasındaki 500 değerini buraya çekeceğiz.)
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="sheet-tabs">
+        <div class="tab" onclick="switchTab('BORÇ')">BORÇ</div>
+        <div class="tab active" id="tabAlacak" onclick="switchTab('ALACAK')">ALACAK</div>
+    </div>
+
+     <div class="controls">
+        <button id="nextBtn" enable><a href="23.html" target="_parent">Sonraki Adım (23) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    let activeSheet = "ALACAK";
+    const borcValue = "500";
+
+    function renderGrid() {
+        const body = document.getElementById('tbody');
+        body.innerHTML = '';
+        for (let r = 1; r <= 8; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => {
+                let id = c + r;
+                let val = "";
+                
+                // BORÇ sayfasında A5 dolu olsun
+                if (activeSheet === "BORÇ" && id === "A5") val = borcValue;
+                // ALACAK sayfasında eğer formül doğruysa B5 dolsun (başlangıçta boş)
+                
+                return `<td id="${id}" onclick="handleCellClick('${id}')">${val}</td>`;
+            }).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function switchTab(name) {
+        activeSheet = name;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if (name === "ALACAK") document.getElementById('tabAlacak').classList.add('active');
+        // Eğer kullanıcı BORÇ sayfasına tıklarsa oradaki veriyi görsün
+        renderGrid();
+    }
+
+    function handleCellClick(id) {
+        if (activeSheet !== "ALACAK" || id !== "B5") return;
+
+        const cell = document.getElementById(id);
+        if (cell.querySelector('input')) return;
+
+        const inp = document.createElement('input');
+        inp.type = "text";
+        inp.className = "formula-input";
+        cell.appendChild(inp);
+        setTimeout(() => inp.focus(), 10);
+
+        inp.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                const formula = inp.value.trim().toUpperCase();
+                if (formula === "=BORÇ!A5" || formula === "=BORC!A5") {
+                    cell.innerText = borcValue;
+                    cell.style.color = "red";
+                    cell.style.fontWeight = "bold";
+                    document.getElementById('nextBtn').disabled = false;
+                    document.getElementById('instr').innerHTML = "Tebrikler! Farklı sayfadan veri başarıyla çekildi. Artık BORÇ sayfasındaki değişimleri buradan izleyebilirsiniz.";
+                    document.getElementById('instr').style.background = "#dcfce7";
+                } else {
+                    cell.innerText = inp.value;
+                    document.getElementById('instr').innerHTML = "Hata: Lütfen tam olarak <b>=BORÇ!A5</b> yazın.";
+                }
+                inp.remove();
+            }
+        };
+    }
+
+    renderGrid();
+</script>
+</body>
+</html>

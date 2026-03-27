@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim - Sekme Rengi</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 900px; margin-top: 10px; }
+        
+        .info-panel { background: #fdf2f8; border-left: 5px solid #db2777; padding: 15px; margin-bottom: 20px; color: #9d174d; font-weight: 600; font-size: 15px; }
+        
+        /* Alt Sekmeler */
+        .sheet-tabs { display: flex; background: #f3f3f3; border: 1px solid #ccc; border-top: none; padding: 0 10px; height: 40px; align-items: flex-end; position: relative; }
+        .tab { 
+            padding: 5px 20px; border: 1px solid #ccc; background: #fff; margin-right: 2px; 
+            font-size: 13px; cursor: context-menu; border-bottom: none; border-radius: 4px 4px 0 0;
+            position: relative; transition: 0.2s; font-weight: bold;
+            border-top: 3px solid var(--excel-green);
+        }
+
+        /* Sağ Tık Menüsü */
+        .context-menu {
+            position: absolute; background: #ffffff; border: 1px solid #bababa; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            padding: 2px 0; z-index: 100; display: none; min-width: 180px;
+        }
+        .menu-item { 
+            padding: 6px 20px; font-size: 13px; cursor: pointer; position: relative;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-item:hover { background: #91c9f7; color: #000; }
+
+        /* Renk Paleti (Alt Menü) */
+        .color-palette-container {
+            position: absolute; left: 100%; top: -5px; background: #ffffff; border: 1px solid #bababa;
+            display: none; padding: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            grid-template-columns: repeat(5, 18px); gap: 4px;
+        }
+        .menu-item:hover > .color-palette-container { display: grid; }
+        
+        .color-box { width: 18px; height: 18px; cursor: pointer; border: 1px solid #ccc; }
+        .color-box:hover { outline: 1px solid #000; transform: scale(1.1); }
+
+        .controls { margin-top: 20px; text-align: right; }
+        button#nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #010101;
+}
+a:link {
+    color: #FDFBFB;
+}
+a:visited {
+    color: #F4F0F0;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="info-panel" id="instruction">
+        Yönerge: <b>senetler</b> sekmesine <b>sağ tıklayın</b>, <b>Sekme Rengi</b>'nin yanındaki paletten bir renk seçin.
+    </div>
+
+    <div style="height: 150px; background: #fafafa; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; color: #ccc; margin-bottom: 2px;">
+        Excel Tablo Alanı (Pasif)
+    </div>
+
+    <div class="sheet-tabs" id="tabArea">
+        <div class="tab" id="sheetTab" oncontextmenu="showMenu(event)">
+            senetler
+        </div>
+        
+        <div id="ctxMenu" class="context-menu">
+            <div class="menu-item">Ekle...</div>
+            <div class="menu-item">Sil</div>
+            <div class="menu-item">Yeniden Adlandır</div>
+            <div class="menu-item" style="border-top: 1px solid #eee;">
+                Sekme Rengi <span>▶</span>
+                <div class="color-palette-container">
+                    <div class="color-box" style="background: #FF0000;" onclick="applyColor('#FF0000')"></div>
+                    <div class="color-box" style="background: #00FF00;" onclick="applyColor('#00FF00')"></div>
+                    <div class="color-box" style="background: #0000FF;" onclick="applyColor('#0000FF')"></div>
+                    <div class="color-box" style="background: #FFFF00;" onclick="applyColor('#FFFF00')"></div>
+                    <div class="color-box" style="background: #FFA500;" onclick="applyColor('#FFA500')"></div>
+                    <div class="color-box" style="background: #800080;" onclick="applyColor('#800080')"></div>
+                    <div class="color-box" style="background: #00FFFF;" onclick="applyColor('#00FFFF')"></div>
+                    <div class="color-box" style="background: #FFC0CB;" onclick="applyColor('#FFC0CB')"></div>
+                    <div class="color-box" style="background: #000000;" onclick="applyColor('#000000')"></div>
+                    <div class="color-box" style="background: #808080;" onclick="applyColor('#808080')"></div>
+                </div>
+            </div>
+            <div class="menu-item" style="border-top: 1px solid #eee;">Koru...</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="nextBtn" enable><a href="20.html" target="_parent">Sonraki Adım (20) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    const menu = document.getElementById('ctxMenu');
+    const tab = document.getElementById('sheetTab');
+
+    function showMenu(e) {
+        e.preventDefault();
+        menu.style.display = 'block';
+        // Menü konumu ayarı
+        let x = e.pageX - document.getElementById('tabArea').offsetLeft;
+        menu.style.left = x + 'px';
+        menu.style.bottom = '35px'; 
+    }
+
+    function applyColor(color) {
+        // Excel'deki sekme rengi efekti: alt çizgi ve hafif üst geçiş
+        tab.style.borderTopColor = color;
+        tab.style.boxShadow = `inset 0 -4px 0 0 ${color}`;
+        
+        menu.style.display = 'none';
+        document.getElementById('nextBtn').disabled = false;
+        document.getElementById('instruction').innerHTML = "Tebrikler! Renk başarıyla uygulandı. Sonraki adıma geçebilirsiniz.";
+        document.getElementById('instruction').style.background = "#dcfce7";
+        document.getElementById('instruction').style.color = "#166534";
+    }
+
+    // Menüyü kapatmak için boşluğa tıklama
+    window.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
+</script>
+</body>
+</html>

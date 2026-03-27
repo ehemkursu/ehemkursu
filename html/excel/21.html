@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim - Hücreler arası veri aktarma</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 850px; margin-top: 10px; }
+        
+        .info-panel { background: #f0fdf4; border-left: 5px solid var(--excel-green); padding: 15px; margin-bottom: 15px; color: #166534; font-weight: 600; font-size: 15px; }
+        
+        /* Grid */
+        .excel-frame { border: 1px solid #ccc; background: #fff; position: relative; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 35px; text-align: center; font-size: 14px; position: relative; background: white; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Önemli Hücreler */
+        #B5 { background-color: #f8fafc; font-weight: bold; color: var(--excel-green); border: 2px solid #dee2e6; }
+        #E5 { background-color: #fffbeb; cursor: cell; }
+
+        /* Formül Input */
+        .formula-input { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            border: 2px solid var(--excel-green); box-sizing: border-box; 
+            text-align: center; font-size: 14px; outline: none; z-index: 100; background: white; 
+        }
+
+        /* Seçim */
+        .selected { outline: 2px solid var(--excel-green); z-index: 5; }
+
+        .controls { margin-top: 20px; text-align: right; }
+        #nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        #nextBtn:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #010101;
+}
+a:link {
+    color: #F9F8F8;
+}
+a:visited {
+    color: #F8F8F8;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="info-panel" id="instr">
+        Yönerge: <b>B5</b> hücresindeki veriyi <b>E5</b> hücresine aktaracağız. <br>
+        <b>E5</b> hücresine tıklayın, klavyeden <b>=B5</b> yazın ve <b>Enter</b> tuşuna basın.
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+     <div class="controls">
+        <button id="nextBtn" enable><a href="22.html" target="_parent">Sonraki Adım (22) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    const sourceVal = "Edremit";
+
+    function init() {
+        const body = document.getElementById('tbody');
+        for (let r = 1; r <= 10; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => {
+                let id = c + r;
+                let val = (id === "B5") ? sourceVal : "";
+                return `<td id="${id}" onclick="handleCellClick('${id}')">${val}</td>`;
+            }).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function handleCellClick(id) {
+        // Eski seçimleri temizle
+        document.querySelectorAll('td').forEach(td => td.classList.remove('selected'));
+        const cell = document.getElementById(id);
+        cell.classList.add('selected');
+
+        // Sadece E5 hücresine formül girişine izin ver
+        if (id === "E5") {
+            startFormulaEntry(cell);
+        }
+    }
+
+    function startFormulaEntry(cell) {
+        if (cell.querySelector('input')) return;
+        
+        const inp = document.createElement('input');
+        inp.type = "text";
+        inp.className = "formula-input";
+        inp.value = cell.getAttribute('data-formula') || "";
+        cell.appendChild(inp);
+        
+        setTimeout(() => {
+            inp.focus();
+            // Eğer hücrede zaten veri varsa (hata sonrası) metni seç
+            inp.select();
+        }, 10);
+
+        inp.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                const formula = inp.value.trim().toUpperCase();
+                
+                if (formula === "=B5") {
+                    cell.innerText = sourceVal; // Değeri göster
+                    cell.style.color = "blue"; // Formüllü olduğunu belli et
+                    cell.style.fontWeight = "bold";
+                    document.getElementById('nextBtn').disabled = false;
+                    document.getElementById('instr').innerHTML = "Tebrikler! Hücre referansı başarıyla oluşturuldu. B5 geliştikçe E5 de otomatik güncellenecektir.";
+                    document.getElementById('instr').style.background = "#dcfce7";
+                } else {
+                    cell.innerText = inp.value; // Yazdığı hatayı göster
+                    document.getElementById('instr').innerHTML = "Hata: Lütfen tam olarak <b>=B5</b> yazın ve Enter'a basın.";
+                    document.getElementById('instr').style.background = "#fee2e2";
+                    document.getElementById('instr').style.color = "#b91c1c";
+                }
+                inp.remove();
+            }
+        };
+    }
+
+    init();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim - Temizleme</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 95%; max-width: 950px; margin-top: 10px; }
+        
+        /* Ribbon Menü */
+        .toolbar { display: flex; background: #f3f3f3; padding: 10px; border: 1px solid #ccc; gap: 15px; align-items: center; border-bottom: 2px solid #ddd; }
+        .tool-group { position: relative; display: flex; align-items: center; }
+        
+        .btn-tool { padding: 6px 12px; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 11px; min-width: 80px; border-radius: 4px; }
+        .btn-tool:hover { background: #e2e8f0; border-color: #999; }
+        .btn-tool span { font-size: 20px; margin-bottom: 2px; }
+
+        /* Temizle Dropdown */
+        .clear-dropdown {
+            position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc;
+            box-shadow: 2px 5px 15px rgba(0,0,0,0.15); display: none; z-index: 1000; min-width: 200px;
+        }
+        .clear-option { padding: 10px 15px; font-size: 13px; cursor: pointer; color: #333; display: flex; align-items: center; gap: 10px; }
+        .clear-option:hover { background: #0078d4; color: white; }
+
+        .info-panel { background: #fffde7; border-left: 5px solid #fbc02d; padding: 15px; margin: 10px 0; color: #333; font-weight: 600; font-size: 15px; }
+        
+        /* Grid */
+        .excel-frame { border: 1px solid #ccc; background: #fff; overflow: auto; min-height: 350px; }
+        .excel-table { border-collapse: collapse; user-select: none; table-layout: fixed; width: 100%; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 32px; text-align: center; font-size: 13px; position: relative; transition: background 0.2s; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Renk Stilleri */
+        .fmt-red { background-color: #fee2e2 !important; border: 2px solid #ef4444 !important; font-weight: bold; }
+        .fmt-blue { background-color: #dbeafe !important; border: 2px solid #3b82f6 !important; font-weight: bold; }
+        .fmt-yellow { background-color: #fef9c3 !important; border: 2px solid #eab308 !important; font-weight: bold; }
+        .fmt-purple { background-color: #f3e8ff !important; border: 2px solid #a855f7 !important; font-weight: bold; }
+
+        .selected { outline: 2px solid var(--excel-green); background-color: rgba(33, 115, 70, 0.1) !important; z-index: 10; }
+
+        .controls { margin-top: 15px; text-align: right; }
+        #nextBtn { padding: 10px 40px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #nextBtn:disabled { background: #94a3b8; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #060606;
+}
+a:link {
+    color: #FFFFFF;
+}
+a:visited {
+    color: #F8F4F4;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="toolbar">
+        <div class="tool-group">
+            <button class="btn-tool" onclick="toggleClearMenu(event)">
+                <span>🧹</span>Temizle ▼
+            </button>
+            <div id="clearDropdown" class="clear-dropdown">
+                <div class="clear-option" onclick="executeClear('all')">✨ Tümünü Temizle</div>
+                <div class="clear-option" onclick="executeClear('format')">🎨 Biçimleri Temizle</div>
+                <div class="clear-option" onclick="executeClear('content')">📝 İçeriği Temizle</div>
+            </div>
+        </div>
+        <div style="margin-left: 20px; font-size: 12px; color: #666;">Giriş / Düzenleme</div>
+    </div>
+
+    <div class="info-panel" id="instr">
+        Yönerge: Tablodan bir alan seçin. <b>Temizle</b> menüsündeki seçenekleri deneyin. (Örn: Biçimleri temizleyince renkler gider, içeriği temizleyince metinler gider.)
+    </div>
+
+    <div class="excel-frame">
+        <table class="excel-table" id="mainGrid">
+            <thead>
+                <tr><th style="width:45px;">◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="nextBtn" enable><a href="21.html" target="_parent">Sonraki Adım (21) →</a></button>
+    </div>
+
+</div>
+
+<script>
+    let isMouseDown = false;
+    let selectedSet = new Set();
+
+    function init() {
+        const body = document.getElementById('tbody');
+        for (let r = 1; r <= 12; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => {
+                let id = c + r;
+                let fmt = ""; let val = "";
+                if(r >= 2 && r <= 10 && ['B','C','D','E'].includes(c)) {
+                    if(c === 'B') fmt = "fmt-red";
+                    if(c === 'C') fmt = "fmt-blue";
+                    if(c === 'D') fmt = "fmt-yellow";
+                    if(c === 'E') fmt = "fmt-purple";
+                    val = "VERİ";
+                }
+                return `<td id="${id}" class="${fmt}" onmousedown="dragStart('${id}')" onmouseover="dragMove('${id}')">${val}</td>`;
+            }).join('');
+            body.appendChild(tr);
+        }
+    }
+
+    function dragStart(id) {
+        isMouseDown = true;
+        if (!event.ctrlKey) clearSelection();
+        selectCell(id);
+    }
+    function dragMove(id) { if (isMouseDown) selectCell(id); }
+    window.onmouseup = () => { isMouseDown = false; };
+
+    function selectCell(id) {
+        document.getElementById(id).classList.add('selected');
+        selectedSet.add(id);
+    }
+    function clearSelection() {
+        selectedSet.clear();
+        document.querySelectorAll('td').forEach(td => td.classList.remove('selected'));
+    }
+
+    function toggleClearMenu(e) {
+        e.stopPropagation();
+        const d = document.getElementById('clearDropdown');
+        d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function executeClear(type) {
+        if (selectedSet.size === 0) return;
+
+        selectedSet.forEach(id => {
+            const cell = document.getElementById(id);
+            if (type === 'all') {
+                cell.className = "selected"; 
+                cell.innerText = "";
+                cell.style.cssText = "";
+            } else if (type === 'format') {
+                cell.className = "selected"; 
+                cell.style.cssText = "";
+            } else if (type === 'content') {
+                cell.innerText = "";
+            }
+        });
+
+        document.getElementById('nextBtn').disabled = false;
+        document.getElementById('instr').innerHTML = "İşlem uygulandı! İstediğiniz gibi temizleme yapabilirsiniz.";
+        document.getElementById('instr').style.background = "#dcfce7";
+    }
+
+    window.onclick = () => { document.getElementById('clearDropdown').style.display = 'none'; };
+    init();
+</script>
+</body>
+</html>

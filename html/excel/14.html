@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Excel Eğitim</title>
+    <style>
+        :root { --excel-green: #217346; --border: #cbd5e1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 20px; user-select: none; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 850px; }
+        
+        .toolbar { display: flex; background: #f3f3f3; padding: 10px; border: 1px solid #ccc; gap: 10px; margin-bottom: 10px; }
+        .btn-tool { padding: 8px 20px; border: 1px solid #bbb; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 12px; }
+        .btn-tool:hover { background: #e2e8f0; border-color: var(--excel-green); }
+
+        .info-panel { background: #e7f3ff; border-left: 5px solid var(--excel-green); padding: 15px; margin-bottom: 15px; color: #1e293b; font-weight: 600; }
+        
+        .excel-table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 1px solid #ccc; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); width: 100px; height: 32px; text-align: center; font-size: 14px; position: relative; }
+        .excel-table th { background: #f8fafc; color: #475569; font-weight: 500; }
+        
+        /* Seçim Efektleri */
+        .selected { background-color: rgba(33, 115, 70, 0.2) !important; outline: 1.5px solid var(--excel-green); z-index: 5; }
+        .cut-mode { border: 1.5px dashed var(--excel-green) !important; opacity: 0.7; }
+
+        .controls { margin-top: 20px; display: flex; justify-content: flex-end; }
+        #nextBtn { padding: 10px 30px; background: var(--excel-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #nextBtn:disabled { background: #94a3b8; cursor: not-allowed; }
+    body,td,th {
+    font-family: "Segoe UI", sans-serif;
+    color: #090909;
+}
+    a:link {
+    color: #F8F2F2;
+}
+a:visited {
+    color: #F4EDED;
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="toolbar">
+        <button class="btn-tool" onclick="handleCut()"><b>✂️</b>Kes (Ctrl+X)</button>
+        <button class="btn-tool" onclick="handlePaste()"><b>📥</b>Yapıştır (Ctrl+V)</button>
+    </div>
+
+    <div class="info-panel">
+        Yönerge: <b>B5:B10</b> aralığını fareyle seçin. <b>Ctrl+X</b> ile kesin, <b>D5</b> hücresine tıklayıp <b>Ctrl+V</b> ile yapıştırın.
+    </div>
+
+    <table class="excel-table" id="grid">
+        <thead>
+            <tr><th>◢</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        </thead>
+        <tbody id="gridBody"></tbody>
+    </table>
+
+    <div class="controls">
+        <button id="nextBtn" enable><a href="15.html" target="_parent">Sonraki Adım (15) →</a></button>
+    </div>
+</div>
+
+<script>
+    let isMouseDown = false;
+    let selectedIds = new Set();
+    let isCutActive = false;
+    const fruits = ["Elma", "Armut", "Muz", "Çilek", "Kivi", "Vişne"];
+
+    function render() {
+        const tbody = document.getElementById('gridBody');
+        tbody.innerHTML = '';
+        for (let r = 1; r <= 12; r++) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>` + ['A','B','C','D','E'].map(c => {
+                let id = c + r;
+                let val = (c === 'B' && r >= 5 && r <= 10) ? fruits[r-5] : "";
+                return `<td id="${id}" data-id="${id}">${val}</td>`;
+            }).join('');
+            tbody.appendChild(tr);
+        }
+        setupEvents();
+    }
+
+    function setupEvents() {
+        const grid = document.getElementById('grid');
+
+        grid.addEventListener('mousedown', (e) => {
+            if (e.target.tagName !== 'TD') return;
+            isMouseDown = true;
+            if (!isCutActive) clearAll();
+            selectCell(e.target);
+        });
+
+        grid.addEventListener('mouseover', (e) => {
+            if (isMouseDown && e.target.tagName === 'TD' && !isCutActive) {
+                selectCell(e.target);
+            }
+        });
+
+        window.addEventListener('mouseup', () => { isMouseDown = false; });
+
+        // Klavye Kısayolları (Ctrl+X, Ctrl+V)
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'x') { e.preventDefault(); handleCut(); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'v') { e.preventDefault(); handlePaste(); }
+        });
+    }
+
+    function selectCell(el) {
+        el.classList.add('selected');
+        selectedIds.add(el.dataset.id);
+    }
+
+    function clearAll() {
+        selectedIds.clear();
+        document.querySelectorAll('td').forEach(td => td.classList.remove('selected'));
+    }
+
+    function handleCut() {
+        if (selectedIds.size > 0) {
+            isCutActive = true;
+            selectedIds.forEach(id => document.getElementById(id).classList.add('cut-mode'));
+        }
+    }
+
+    function handlePaste() {
+        const targetCellId = Array.from(selectedIds).pop(); // Tıklanan son hücre
+        if (targetCellId === "D5" && isCutActive) {
+            for (let r = 5; r <= 10; r++) {
+                document.getElementById('B' + r).innerText = "";
+                document.getElementById('B' + r).classList.remove('cut-mode', 'selected');
+                document.getElementById('D' + r).innerText = fruits[r-5];
+            }
+            document.getElementById('nextBtn').disabled = false;
+            isCutActive = false;
+        }
+    }
+
+    render();
+</script>
+</body>
+</html>
