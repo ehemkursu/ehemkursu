@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İnternet Öğrenme Paneli</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+            --question-color: #d63031; /* Kırmızı Soru Rengi */
+            --answer-color: #0984e3;   /* Mavi Cevap Rengi */
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 700px; text-align: center; position: relative; z-index: 1; }
+        
+        .progress-container { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-bottom: 20px; display: none; }
+        .progress-bar { height: 100%; background: var(--success); width: 0%; border-radius: 4px; transition: 0.5s; }
+
+        .content-area { min-height: 450px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        img { max-width: 100%; max-height: 350px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        
+        h2 { color: #2c3e50; margin-bottom: 15px; }
+        
+        /* Soru Metni Stili */
+        .question-text { 
+            font-size: 24px; 
+            color: var(--question-color); 
+            font-weight: bold; 
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        p { font-size: 18px; color: #555; line-height: 1.5; }
+        
+        /* Cevap Input Stili */
+        input[type="text"] { 
+            width: 85%; 
+            padding: 15px; 
+            border: 3px solid #ddd; 
+            border-radius: 10px; 
+            font-size: 22px; /* Büyük font */
+            font-weight: bold; /* Koyu yazım */
+            color: var(--answer-color); /* Mavi renk */
+            margin: 20px 0; 
+            outline: none; 
+            text-align: center; 
+        }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(52, 152, 219, 0.4); }
+
+        button { padding: 14px 45px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.3s; background: var(--primary); color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        #success-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(46, 204, 113, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-size: 40px;
+            font-weight: bold;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .error-text { color: var(--error); font-weight: bold; margin-top: 10px; visibility: hidden; }
+        small { color: #777; font-weight: normal; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div id="success-overlay">
+    <div style="font-size: 80px;">✅</div>
+    <div>Cevabınız Doğru!</div>
+</div>
+
+<div class="container">
+    <div class="progress-container" id="p-cont">
+        <div class="progress-bar" id="p-bar"></div>
+    </div>
+
+    <div id="display-area" class="content-area">
+        <img src="kapak.png">
+        <h2>İnternet Dünyasını Öğreniyoruz</h2>
+        <p>Resimleri incele, soruları doğru yanıtla ve ilerle!</p>
+        <button onclick="startApp()">DERSE BAŞLA</button>
+    </div>
+</div>
+
+<script>
+    const data = [
+        { img: "2.png", q: "İnternet adresinin diğer adı nedir?", a: ["web adresi"] },
+ 	{ img: "2.png", q: "İnternetteki posta kutumuzun adresine ne isim verilir?", a: ["email", "email adresi", "eposta", "eposta adresi", "elektronik posta adresi"] },
+        { img: "3.png", q: "Bir internet adresi kaç bölümden oluşur?", a: ["5"] },
+	{ img: "3.png", q: "Türkiye' nin internet kısaltması nedir?", a: ["tr"] },
+ 	{ img: "3.png", q: "Bir internet adresinden dünyada kaç adet olabilir?", a: ["1", "bir"] },
+        { img: "4.png", q: "www.sağlık.gov.tr internet adresinin doğru yazımı nedir?", a: ["www.saglik.gov.tr"] },
+        { img: "5.png", q: "İngilizcede olmayan Türkçe karakterler nelerdir?", a: ["ç", "ğ", "ö", "ü", "ı", "ş", "i"], isSpecial: true },
+        { img: "6.png", q: "İnternete girmek için kullandığımız programlara ne isim verilir?", a: ["internet tarayıcı", "web browser"] },
+	{ img: "6.png", q: "İnternet Explorer yerine çıkan internet tarayıcısının adı nedir?", a: ["edge"] },
+        { img: "7.png", q: "İnternet sitelerinin adına ne isim verilir?", a: ["domain"] },
+        { img: "7.png", q: "İnternet sitesi barındırma hizmetinin adı nedir?", a: ["hosting"] },
+	{ img: "7.png", q: "İnternet sitesinin görsel yapısına ne isim verilir?", a: ["web tasarım"] },
+        { img: "8.png", q: "İnternette güvenlik sertifikasının gösterimi nedir?", a: ["ssl"] },
+ 	{ img: "8.png", q: "Bir internet sitenin güvenli olması için adresi nasıl başlamalıdır?", a: ["https://"] },
+	{ img: "8.png", q: "Bir internet sitenin güvenli olması için kaç şartın sağlanması gerekir?", a: ["3"] },
+        { img: "9.png", q: "İnternette arama yaptığımız sitelere ne isim verilir?", a: ["arama motoru"] },
+	{ img: "9.png", q: "Google bir kütüphanedir, aradığımız tüm bilgileri orada bulabiliriz. cümlesi doğru mudur?", a: ["hayır"] },
+ 	{ img: "9.png", q: "Google' dan başka bir arama motoru ismi yazınız?", a: ["bing", "yandex", "yahoo", "ask", "aol", "vuhuv", "arama", ] },
+        { img: "10.png", q: "İnternetten resim indirmek için hangi seçenek kullanılır?", a: ["resmi farklı kaydet"] },
+        { img: "11.png", q: "İnternetteki bir yazıyı kopyalamak için hangi kısayol tuşu kullanılır?", a: ["ctrl+c", "ctrl c"] },
+	{ img: "11.png", q: "İnternetten kopyaladığımız bir yazıyı word programına yapıştırmak için hangi kısayol tuşu kullanılır?", a: ["ctrl+v", "ctrl v"] },
+        { img: "12.png", q: "İnternet geçmişimizi temizlemek için hangi kısayol tuşu kullanılır?", a: ["ctrl+shift+delete", "ctrl shift delete", "ctrl+h", "ctrl h"] },
+        { img: "13.png", q: "Üniversitelerin internet kısaltması nedir?", a: ["edu"] },
+ 	{ img: "13.png", q: "Milli Eğitim Bakanlığının internet sitesinin kısaltması nedir?", a: ["gov", "gov.tr"] },
+        { img: "14.png", q: "İnternet programına girişimizde karşımıza gelen ilk sayfaya ne isim verilir?", a: ["açılış sayfası", "başlangıç sayfası", "giriş sayfası"] },
+        { img: "15.png", q: "Sık kullanılanlara ekleme kısayolu nedir?", a: ["ctrl+d", "ctrl d"] },
+        { img: "16.png", q: "Gizli pencereye geçmek için hangi kısayol tuşu kullanılır?", a: ["ctrl+shift+n", "ctrl shift n"] },
+        { img: "17.png", q: "Yanlışlıkla çıktığımız bir siteye geri dönme kısayolu nedir?", a: ["ctrl+shift+t", "ctrl shift t"] },
+        { img: "18.png", q: "İnternette girdiğimiz şifreler otomatik olarak kayıt edilebilir mi?", a: ["evet"] }
+    ];
+
+    let currentIdx = 0;
+    const area = document.getElementById('display-area');
+    const overlay = document.getElementById('success-overlay');
+
+    function startApp() {
+        document.getElementById('p-cont').style.display = 'block';
+        showLesson();
+    }
+
+    function showLesson() {
+        updateProgress();
+        area.innerHTML = `
+            <img src="${data[currentIdx].img}">
+            <h2>Konuyu İncele</h2>
+            <p>Resimdeki bilgileri dikkatlice oku, hazır olduğunda soruya geç.</p>
+            <button onclick="showQuestion()">SORUYA GEÇ</button>
+        `;
+    }
+
+    function showQuestion() {
+        let questionContent = `<div class="question-text">${data[currentIdx].q}</div>`;
+        if(data[currentIdx].isSpecial) {
+            questionContent += "<small>(Karakter sırası önemli değildir)</small>";
+        }
+
+        area.innerHTML = `
+            <h2>Soru ${currentIdx + 1}</h2>
+            ${questionContent}
+            <input type="text" id="ansInput" placeholder="Cevabınızı buraya yazın..." autocomplete="off">
+            <div id="errorMsg" class="error-text">Yanlış cevap! Resme geri yönlendiriliyorsunuz...</div>
+            <div style="margin-top:20px;">
+                <button onclick="checkAnswer()">CEVAPLA</button>
+            </div>
+        `;
+        document.getElementById('ansInput').focus();
+        document.getElementById('ansInput').addEventListener("keypress", (e) => { if(e.key === "Enter") checkAnswer(); });
+    }
+
+    function checkAnswer() {
+        const inputRaw = document.getElementById('ansInput').value.trim().toLowerCase();
+        let isCorrect = false;
+
+        if (data[currentIdx].isSpecial) {
+            const requiredChars = data[currentIdx].a;
+            const userChars = inputRaw.replace(/\s+/g, '').split('');
+            isCorrect = requiredChars.every(char => userChars.includes(char)) && 
+                        new Set(userChars).size >= requiredChars.length;
+        } else {
+            const correctOnes = data[currentIdx].a.map(v => v.toLowerCase());
+            isCorrect = correctOnes.includes(inputRaw);
+        }
+
+        if (isCorrect) {
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                currentIdx++;
+                if (currentIdx < data.length) {
+                    showLesson();
+                } else {
+                    showFinish();
+                }
+            }, 1500);
+        } else {
+            const err = document.getElementById('errorMsg');
+            err.style.visibility = 'visible';
+            setTimeout(() => {
+                showLesson(); 
+            }, 1500);
+        }
+    }
+
+    function updateProgress() {
+        const percent = (currentIdx / data.length) * 100;
+        document.getElementById('p-bar').style.width = percent + '%';
+    }
+
+    function showFinish() {
+        document.getElementById('p-bar').style.width = '100%';
+        area.innerHTML = `
+            <h1 style="color:var(--success)">Tebrikler! 🎉</h1>
+            <p>Tüm eğitim modüllerini ve soruları başarıyla tamamladın.</p>
+            <button onclick="location.reload()">BAŞTAN BAŞLA</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
