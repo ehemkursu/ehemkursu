@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>EXCEL DOĞRU - YANLIŞ TESTİ</title>
+<style>
+:root{--primary:#27ae60;--success:#2ecc71;--error:#e74c3c;--bg:#f8f9fa;--warning:#f39c12}
+body{font-family:sans-serif;background:var(--bg);margin:0;padding:20px}
+.container{max-width:900px;margin:0 auto;background:#fff;padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+.cover{text-align:center;margin-bottom:15px;padding:10px;background:linear-gradient(135deg,#27ae60 0%,#1e8449 100%);border-radius:15px;color:white;min-height:auto}
+.cover img{max-width:200px;border-radius:10px;margin-bottom:15px}
+.question-box{background:#fff;padding:25px;border-radius:12px;border:2px solid #ddd;margin-bottom:20px}
+.q-text{font-size:22px;font-weight:bold;margin-bottom:20px;color:#333}
+.q-media{text-align:center;margin:20px 0}
+.q-media img{max-width:100%;max-height:300px;border-radius:8px;cursor:pointer}
+.q-media video{max-width:100%;max-height:300px;border-radius:8px}
+.options{display:flex;gap:20px;justify-content:center;margin:30px 0}
+.option-btn{padding:20px 50px;font-size:20px;border:none;border-radius:10px;cursor:pointer;font-weight:bold;transition:all 0.3s}
+.option-dogru{background:#2ecc71;color:white}
+.option-dogru:hover{background:#27ae60;transform:scale(1.05)}
+.option-yanlis{background:#e74c3c;color:white}
+.option-yanlis:hover{background:#c0392b;transform:scale(1.05)}
+.result-msg{text-align:center;padding:15px;border-radius:8px;margin:15px 0;font-weight:bold;font-size:18px}
+.result-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.result-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.stats-box{background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:15px;text-align:center}
+.stat-item{background:white;padding:15px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+.stat-value{font-size:28px;font-weight:bold}
+.stat-label{font-size:12px;color:#666;margin-top:5px}
+.stat-dogru{color:var(--success)}
+.stat-yanlis{color:var(--error)}
+.stat-toplam{color:var(--primary)}
+.stat-eklenen{color:var(--warning)}
+.progress-bar{background:#e9ecef;height:20px;border-radius:10px;overflow:hidden;margin:20px 0}
+.progress-fill{background:var(--primary);height:100%;transition:width 0.3s}
+#zoomModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center}
+#zoomModal img{max-width:90%;max-height:90%}
+.report-box{background:#d4edda;padding:30px;border-radius:12px;text-align:center;margin-top:30px}
+.report-box h2{color:#155724;margin-bottom:20px}
+.next-btn{background:var(--primary);color:white;padding:15px 40px;font-size:18px;border:none;border-radius:8px;cursor:pointer;margin-top:20px}
+.next-btn:hover{background:#1e8449}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="zoomModal" onclick="this.style.display='none'"><img id="zoomImg" src=""></div>
+<div class="container">
+<div class="cover">
+<img src="data:image/png;base64,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" onclick="openZoom('data:image/png;base64,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')">
+<h1>EXCEL DOĞRU - YANLIŞ TESTİ</h1>
+</div>
+
+<div class="stats-box">
+<div class="stat-item"><div class="stat-value stat-dogru" id="stat-dogru">0</div><div class="stat-label">Doğru</div></div>
+<div class="stat-item"><div class="stat-value stat-yanlis" id="stat-yanlis">0</div><div class="stat-label">Yanlış</div></div>
+<div class="stat-item"><div class="stat-value stat-toplam" id="stat-toplam">20</div><div class="stat-label">Toplam Soru</div></div>
+<div class="stat-item"><div class="stat-value stat-eklenen" id="stat-eklenen">0</div><div class="stat-label">Eklenen Soru</div></div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div id="question-area">
+<div class="question-box">
+<div class="q-text" id="q-text">Sorular hazırlanıyor...</div>
+<div class="q-media" id="q-media"></div>
+<div class="options">
+<button class="option-btn option-dogru" onclick="cevapla('D')">DOĞRU</button>
+<button class="option-btn option-yanlis" onclick="cevapla('Y')">YANLIŞ</button>
+</div>
+<div id="result-area"></div>
+</div>
+</div>
+
+<div id="report-area" class="hidden"></div>
+</div>
+
+<script>
+var library = [{"id":1777666151141,"text":"Excel' bilgilerin yazıldığı kutulara hücre denir.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151143,"text":"Her hücrenin bir adı vardır. 5B, 7C, 10K gibi yazılır.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151144,"text":"HÜCRE İSİMLERİ FORMÜL ÇUBUĞUNDA GÖRÜNÜR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151145,"text":"EXCEL' DE SATIRLAR SAYILAR İLE GÖSTERİLİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151146,"text":"EXCEL' DE SÜTUNLAR HARFLER İLE GÖSTERİLİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151147,"text":"EXCEL' DE HÜCRENİN İÇİNDEKİ FORMÜL VEYA VERİLER FORMÜL ÇUBUĞUNDAN DEĞİŞTİRİLEBİLİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151148,"text":"EXCEL' DE BİR YADA BİRDEN ÇOK HÜCREDEKİ RENK VE KENARLIKLARI SİLMEK İÇİN TEMİZLE ARACI KULLANILABİLİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151149,"text":"YAPIŞTIRMA İŞLEMİNİN KISAYOLU CTRL+V DİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151150,"text":"GERİ AL İŞLEMİNİN KISAYOLU CTRL+Z DİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151151,"text":"FARKLI KAYDET İŞLEMİNİN KISAYOLU F12 DİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151152,"text":"B5 DEN B20' YE KADAR DEMEK İÇİN  B5;B20  YAZILMALIDIR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151153,"text":"BU SİMGE EXCEL' DE YAZI RENGİ DEĞİŞTİRMEK İÇİN KULLANILIR. ","imgData":"1.png","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151154,"text":"TAŞIMA İŞLEMİNİN KISAYOLU CTRL+X DİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151155,"text":"BU SİMGE EXCEL' DEVURGU RENGİ DEĞİŞTİRMEK İÇİN KULLANILIR. ","imgData":"2.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151156,"text":"BU SİMGE EXCEL' DE NİRDEN ÇOK HÜCREYİ BİRLEŞTİRMEK İÇİN KULLANILIR. ","imgData":"3.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151157,"text":"KOPYALAMA İŞLEMİNİN KISAYOLU CTRL+C DİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151158,"text":"BU SİMGE EXCEL' DE YAZIYÖNÜ  DEĞİŞTİRMEK İÇİN KULLANILIR. ","imgData":"4.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151159,"text":"BU SİMGE EXCEL' DE OTOMATİK RENK DEĞİŞİKLİĞİ İÇİN KULLANILIR. ","imgData":"6.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151160,"text":"EXCEL' DE SAYFA SINIRLARINI GÖRMEK İÇİN CTRL+P TUŞU KULLANILABİLİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151161,"text":"BU SİMGE EXCEL' DE YAZI RENGİ DEĞİŞTİRMEK İÇİN KULLANILIR. ","imgData":"7.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151162,"text":"BU SİMGE EXCEL' DE VERİLERİ ELLE YAZMAK YERİNE LİSTEDEN SEÇMEK İÇİN KULLANILIR. ","imgData":"8.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151163,"text":"EXCEL DE SİLİNEN SAYFALAR CTRL+Z İLE GERİ ALINABİLİR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151164,"text":"BU SİMGE EXCEL' DE AYNI BİÇİMİ ÇOĞALTMAK İÇİN KULLANILIR. ","imgData":"9.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151165,"text":"BU SİMGE EXCEL' DE ŞERİDİN KISAYOLU CTRL+F1 DİR.","imgData":"10.PNG","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151166,"text":"EXCEL' DE  B5 HÜCRESİNDEKİ SAYIYI E10 HÜCRESİNE ALMAK İÇİN FORMÜL B5 HÜCRESİNE YAZILIR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151167,"text":"EXCEL' DE  B5 HÜCRESİNDEKİ SAYIYI E10 HÜCRESİNE ALMAK İÇİN FORMÜL E10 HÜCRESİNE YAZILIR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151168,"text":"EXCEL' DE  B5 HÜCRESİNDEKİ SAYIYI E10 HÜCRESİNE ALMAK İÇİN  E10 HÜCRESİNE =B5 YAZILIR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151169,"text":"EXCEL' DE  BORÇ SAYFASINDAKİ B5 HÜCRESİNDEKİ SAYIYI ALACAK SAYFASINA ALMAK İÇİN  =BORÇ!B5 YAZILIR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151170,"text":"EXCEL' DE  BORÇ SAYFASINDAKİ SAYIYI ALACAK SAYFASINA ALMAK İÇİN  FORMÜL BORÇ SAYFASINA YAZILIR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151171,"text":"EXCEL' DE BİR HÜCREYE BİRDEN ÇOK SATIR VERİ GİRMEK İÇİN ALT+ENTER TUŞU KULLANILIR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151172,"text":"EXCEL' DE OTOMATİK TOPLAM İŞLEMİNİN KISAYOLU CTRL+N  DİR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151173,"text":"EXCEL' DE  =B7*%B8  İŞLEMİ İLE B7 NİN B8 KADAR YÜZDESİ ALINMIŞTIR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151174,"text":"EXCEL' DE SADECE  A5,B6,C7,E8 HÜCRELERİ İLE İŞLEM YAPMAK İÇİN (A5:B6:C7:E8) ŞEKLİNDE YAZMAK GEREKİR.","imgData":"","vidData":"","answer":"Y","addedAt":"01.05.2026 23:09:11"},{"id":1777666151175,"text":"EXCEL' BİR HÜCREYE BİLGİ GİRİLDİKTEN SONRA O HÜCREDEN ÇIKMAK GEREKİR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151176,"text":"EXCEL' FORMÜLDEKİ YAZIM HATALARINDA #AD?  HATASI ÇIKAR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151177,"text":"EXCEL' DE VERİLER HÜCREYE SIĞMADIĞI ZAMAN  ####  işaretleri çıkar.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"},{"id":1777666151178,"text":".XLSX BİR EXCEL DOSYA UZANTISIDIR.","imgData":"","vidData":"","answer":"D","addedAt":"01.05.2026 23:09:11"}];
+var initialCount = 20;
+var questions = [];
+var currentQ = 0;
+var dogruSayisi = 0;
+var yanlisSayisi = 0;
+var eklenenSoru = 0;
+var nextLibIndex = initialCount % library.length;
+
+// İlk soruları oluştur
+for(var i=0;i<initialCount;i++){
+    questions.push({...library[i % library.length], qNum: i+1});
+}
+
+function openZoom(src){
+    document.getElementById('zoomImg').src=src;
+    document.getElementById('zoomModal').style.display='flex';
+}
+
+function gosterSoru(){
+    if(currentQ >= questions.length){
+        showReport();
+        return;
+    }
+    var q = questions[currentQ];
+    document.getElementById('q-text').innerText = 'Soru ' + (currentQ+1) + ': ' + (q.text || '');
+    
+    var mediaHtml = '';
+    if(q.imgData) mediaHtml += '<img src="' + q.imgData + '" onclick="openZoom(this.src)">';
+    if(q.vidData) mediaHtml += '<video src="' + q.vidData + '" controls></video>';
+    document.getElementById('q-media').innerHTML = mediaHtml;
+    
+    document.getElementById('result-area').innerHTML = '';
+    updateProgress();
+}
+
+function updateProgress(){
+    var pct = ((currentQ) / questions.length) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+    document.getElementById('stat-toplam').innerText = questions.length;
+}
+
+function updateStats(){
+    document.getElementById('stat-dogru').innerText = dogruSayisi;
+    document.getElementById('stat-yanlis').innerText = yanlisSayisi;
+    document.getElementById('stat-eklenen').innerText = eklenenSoru;
+}
+
+function cevapla(cevap){
+    var q = questions[currentQ];
+    var dogruMu = cevap === q.answer;
+    
+    if(dogruMu){
+        dogruSayisi++;
+        document.getElementById('result-area').innerHTML = '<div class="result-msg result-success">✅ Doğru! Sonraki soruya geçiliyor...</div>';
+        updateStats();
+        setTimeout(function(){
+            currentQ++;
+            gosterSoru();
+        }, 1500);
+    } else {
+        yanlisSayisi++;
+        // Yeni soru ekle
+        var yeniSoru = {...library[nextLibIndex], qNum: questions.length + 1};
+        questions.push(yeniSoru);
+        eklenenSoru++;
+        nextLibIndex = (nextLibIndex + 1) % library.length;
+        
+        document.getElementById('result-area').innerHTML = '<div class="result-msg result-error">❌ Yanlış! Yeni soru eklendi. Toplam ' + questions.length + ' soru oldu.</div>';
+        updateStats();
+        updateProgress();
+        setTimeout(function(){
+            currentQ++;
+            gosterSoru();
+        }, 2000);
+    }
+}
+
+function showReport(){
+    document.getElementById('question-area').classList.add('hidden');
+    document.getElementById('report-area').classList.remove('hidden');
+    
+    var basariOrani = Math.round((dogruSayisi / questions.length) * 100);
+    var html = '<div class="report-box">';
+    html += '<h2>🎉 Sınav Tamamlandı!</h2>';
+    html += '<div class="stats-box" style="margin:30px 0">';
+    html += '<div class="stat-item"><div class="stat-value stat-dogru">' + dogruSayisi + '</div><div class="stat-label">Doğru Cevap</div></div>';
+    html += '<div class="stat-item"><div class="stat-value stat-yanlis">' + yanlisSayisi + '</div><div class="stat-label">Yanlış Cevap</div></div>';
+    html += '<div class="stat-item"><div class="stat-value stat-toplam">' + questions.length + '</div><div class="stat-label">Toplam Soru</div></div>';
+    html += '<div class="stat-item"><div class="stat-value stat-eklenen">' + eklenenSoru + '</div><div class="stat-label">Eklenen Soru</div></div>';
+    html += '</div>';
+    html += '<p style="font-size:20px;margin:20px 0"><strong>Başarı Oranı:</strong> %' + basariOrani + '</p>';
+    html += '<button class="next-btn" onclick="location.reload()">Yeniden Başla</button>';
+    html += '</div>';
+    
+    document.getElementById('report-area').innerHTML = html;
+}
+
+gosterSoru();
+</script>
+</body>
+</html>
