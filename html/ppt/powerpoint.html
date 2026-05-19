@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunu Hazırlama (PowerPoint) Modül Sınavı</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fdf2f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .quiz-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(210, 71, 38, 0.15); width: 100%; max-width: 750px; border: 1px solid #f5c7bc; }
+        h2 { color: #d24726; text-align: center; margin-top: 0; border-bottom: 3px solid #d24726; padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .stats { background: #fff5f5; color: #e74c3c; padding: 10px 20px; border-radius: 25px; font-weight: bold; border: 1px solid #ffcccc; font-size: 0.95em; }
+        .progress { font-size: 1em; color: #34495e; font-weight: bold; background: #fdf2f0; padding: 10px 20px; border-radius: 25px; border: 1px solid #f5c7bc; }
+        .question { font-size: 1.25em; margin-bottom: 25px; color: #2c3e50; line-height: 1.5; font-weight: 600; min-height: 80px; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button.opt-btn { padding: 16px; font-size: 1.05em; cursor: pointer; border: 2px solid #edeff0; border-radius: 12px; transition: all 0.25s ease; background: #fff; text-align: left; color: #2d3436; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        button.opt-btn:hover { background-color: #d24726; color: white; border-color: #d24726; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(210, 71, 38, 0.3); }
+        .hint-container { margin-top: 25px; border-top: 2px dashed #f5c7bc; padding-top: 20px; text-align: center; }
+        #hint-text { display: none; background: #fff9db; color: #856404; padding: 15px; border-radius: 8px; margin-top: 15px; font-style: italic; font-size: 0.95em; border-left: 5px solid #f1c40f; line-height: 1.4; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 0.9em; transition: 0.3s; font-weight: bold; }
+        .hint-btn:hover { background: #7f8c8d; }
+        .result { text-align: center; display: none; padding: 20px; }
+        .restart-btn { background: #27ae60; color: white; border: none; padding: 18px 50px; font-size: 1.2em; border-radius: 35px; cursor: pointer; margin-top: 30px; transition: 0.3s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+        .restart-btn:hover { background: #219150; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-area">
+        <h2>SUNU HAZIRLAMA (POWERPOINT) SINAVI</h2>
+        <div class="stats-bar">
+            <div class="progress">Soru: <span id="current-number">1</span> / 20</div>
+            <div class="stats">Hata (Başa Dönme): <span id="fail-count">0</span></div>
+        </div>
+        <div id="question-text" class="question"></div>
+        <div id="options-area" class="options"></div>
+        
+        <div class="hint-container">
+            <button class="hint-btn" onclick="toggleHint()">💡 İpucu Göster</button>
+            <div id="hint-text"></div>
+        </div>
+    </div>
+
+    <div id="result-area" class="result">
+        <h2 style="border-bottom: none; color: #27ae60;">TEBRİKLER!</h2>
+        <p style="font-size: 1.3em; color: #34495e;">20 soruluk PowerPoint modül sınavını başarıyla tamamladınız.</p>
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin: 25px 0; border: 1px solid #dee2e6;">
+            <p id="final-stats" style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin: 0;"></p>
+        </div>
+        <button class="restart-btn" onclick="resetGame()">Sınavı Tekrarla</button>
+    </div>
+</div>
+
+<script>
+    // Cevaplar gizlenmiştir (a=MA==, b=MQ==, c=Mg==, d=Mw==, e= things follow custom index patterns)
+    const questions = [
+        { q: "1. Power Point’e yeni slayt hangi kısayol tuşu ile eklenir?", a: ["a) Ctrl+N", "b) Ctrl+M", "c) Ctrl+C", "d) Ctrl+E"], c: "MQ==", h: "Yeni bir Belge oluşturma kısayolu ile karıştırmamaya dikkat edin." },
+        { q: "2. Aşağıdaki uzantılardan hangisi Power point programının uzantısıdır?", a: ["a) Xls", "b) Doc", "c) Ppt", "d) Txt"], c: "Mg==", h: "İngilizce 'Presentation' kelimesinin baş harflerinden türetilmiştir." },
+        { q: "3. Power point sunumuzu hangi kısayol tuşu ile gösteri olarak başlatırız?", a: ["a) F1", "b) F2", "c) F4", "d) F5"], c: "Mw==", h: "Klavyenin en üst satırında yer alan fonksiyon tuşlarından biridir." },
+        { q: "4. Power point programındaki bir slayta nasıl ses eklenir?", a: ["a) Ekle / Medya / Ses", "b) Dosya / Resim / Dosyadan", "c) Ekle / Ses", "d) Ekle / Film ve sesler / Video"], c: "MA==", h: "Yeni bir bileşeni çalışma sayfasına yerleştirmek için kullanılan ana menü grubundadır." },
+        { q: "5. Power point de hazır olarak zemin rengi ve yazı tipi gibi ayarlar nerede bulunur?", a: ["a) Slayt düzeni", "b) Slayt geçişi", "c) Slayt tasarımı"], c: "Mg==", h: "Sunum sayfasının genel görsel teması ve görünüm stilini belirler." },
+        { q: "6. Sununun ESC karakterine kadar sürekli döngü oluşturması veya çalışması için hangi işlem yapılmalıdır?", a: ["a) Araçlar – Gösteri Ayarları", "b) Slayt Gösterisi – Slayt Gösterisi Ayarla", "c) Ekle – Döngü Oluştur", "d) Düzen – ESC karakteri", "e) Dosya - Özellikler"], c: "MQ==", h: "Sunum gösterim aşamasındayken yapılacak davranışların belirlendiği ayar alanıdır." },
+        { q: "7. Bir sunumdaki yazı tipi nerede değiştirilir?", a: ["a) Düzen / Nesne", "b) Giriş / Yazı tipi", "c) Görünüm / Normal", "d) Biçim / Slayt tasarımı"], c: "MQ==", h: "Tüm Office programlarında yazı tipi, boyut ve renk gibi biçimlendirme ayarları bu sekmededir." },
+        { q: "8. Powerpointte ki nesnelere hareketli olarak animasyon nereden eklenir?", a: ["a) Animasyonlar/Animasyon", "b) Slayt gösterisi / Slayt geçişi", "c) Biçim / Slayt düzeni", "d) Ekle / Animasyon"], c: "MA==", h: "Slayt içindeki nesnelerin hareket efektlerini düzenleyen üst menü sekmesidir." },
+        { q: "9. Bir sunudaki slâytların tamamını ekranda görmek için hangisi uygulanmalıdır?", a: ["a) Durum Çubuğu-Slâyt Görünümü", "b) Biçim-Tasarımı Uygula", "c) Görünüm – Sunu Görünümleri / Slâyt sıralayıcısı", "d) Slâyt Gösterisi-Slâyt Geçişi"], c: "Mg==", h: "Tüm sayfaları küçük pencereler halinde önünüze sererek sıralama yapmanızı kolaylaştıran görünümdür." },
+        { q: "10. Sununun her bir bölümü ne ad verilir?", a: ["a) Slâyt", "b) Belge", "c) Kitap", "d) Veritabanı"], c: "MA==", h: "Sunumu oluşturan her bir bağımsız çalışma sayfasının teknik adıdır." },
+        { q: "11. Sunu hazırlarken kullanılan resimlerde aşağıdakilerden hangisine dikkat edilmelidir?", a: ["a) Resimler üzerinde sunu konusu ile alakasız yazı olmamalı.", "b) Resimler üzerinde reklâm olmamalı", "c) Çok Küçük Resimler sunularda kullanılmamalı", "d) Hepsi"], c: "Mw==", h: "Görsel kalitenin yüksek ve dikkat dağıtıcı unsurlardan uzak olması için tüm kurallar geçerlidir." },
+        { q: "12. Powerpoint’te tüm slâytların küçük olarak görüldüğü görünüme ne ad verilir?", a: ["A-) Not sayfası görünümü", "B-) Slayt sıralayıcı görünümü", "C-) Tüm slaytlar görünümü", "D-) Anahat görünümü"], c: "MQ==", h: "Slaytların yerlerini değiştirmek ve organize etmek için kullanılan ekran modudur." },
+        { q: "13. Powerpoint’te hazır olarak gelen zemin deseni, yazı rengi ve tipleri gibi ayarlarne denir?", a: ["A-) Slayt düzeni", "B-) Zemin taslağı", "C-) Tasarım", "D-) Taslak"], c: "Mg==", h: "Tüm çalışmaya tek seferde uygulanan hazır görsel şablon yapısıdır." },
+        { q: "14. Powerpoint’te sunumumuza nereden video ekleriz?", a: ["A-) Ekle –Resim –Video", "B-) Ekle – Video aç", "C-) Dosya aç –video", "D-) Ekle – Medya / Video"], c: "Mw==", h: "Video, sunuya harici bir medya nesnesi olarak dahil edilir." },
+        { q: "15. Powerpoint’te slâytlar arası geçiş hangi komutla ayarlanır?", a: ["A-) Canlandırma", "B-) Slayt Sıralayıcı", "C-) Slayt Düzeni", "D-) Geçişler"], c: "Mw==", h: "Bir sayfadan diğer sayfaya geçerken araya giren görsel efektlerin yönetildiği sekmedir." },
+        { q: "16. Bir slaytı % 55 oranıyla görebilmek için ne yapılmalıdır?", a: ["A-) Görünüm-Anahat-% 55-Tamam", "B-) Görünüm-Yakınlaştır-% 55-Tamam", "C-) Görünüm-Küçük slâyt-% 55-Tamam", "D-) Görünüm-Tamam"], c: "MQ==", h: "Ekrandaki çalışma alanının ölçeğini (Zoom) ayarlayan seçenektir." },
+        { q: "17. Powerpoint’te nesneleri canlandırma ne için yapılır?", a: ["A-) Canlandırılmayan nesneler sunumda gözükmez", "B-) Sunumun daha hızlı olması için", "C-) Sunumun daha etkileyici ve anlaşılır olması için", "D-) Canlandırma olmadan sunum olmaz"], c: "Mg==", h: "Dinleyicilerin dikkatini canlı tutmak ve anlatımı desteklemek amacıyla tercih edilir." },
+        { q: "18. Herhangi bir nesnenin tüm slâytlarda görünmesini aşağıdakilerden hangisi sağlar?", a: ["A-) Slâyt Gösterisi görünümü", "B-) Tümüne uygula seçeneği", "C-) Arka Plan menüsü", "D-) Asıl slâyt seçeneği"], c: "Mw==", h: "Tüm sununun arka plan şablonunu ve ortak bileşenlerini kontrol eden ana kalıptır." },
+        { q: "19. Slayt numarası ekleme aşağıdaki yollardan hangisi kullanılarak yapılır?", a: ["A-) Ekle-Nesne", "B-) Biçim- Madde İşaretleri ve Numaralandırma", "C-) Görünüm-Alt bilgi ve Üst bilgi- Slayt Numarası seçeneği", "D-) Ekle – Metin Penceresi - Slayt Numarası"], c: "Mw==", h: "Menü şeridindeki 'Ekle' sekmesi altında bulunan metin araç grubunun altındadır." },
+        { q: "20. PowerPoint’ te bir sunu oluştururken dikkat edilecek en önemli iki nokta aşağıdakilerden hangisidir?", a: ["a) Artalan / Hizalama", "b) Slayt Numarası / Tarih ve Saat", "c) Yazı Tipi / Boyutu", "d) Kompozisyon / Zamanlama"], c: "Mw==", h: "Sunumun genel kurgusu (içerik düzeni) ve hedef süreye sadık kalınması kritik önem taşır." }
+    ];
+
+    let currentIdx = 0;
+    let fails = 0;
+
+    function loadQuestion() {
+        const qData = questions[currentIdx];
+        document.getElementById('current-number').innerText = currentIdx + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        document.getElementById('hint-text').style.display = 'none';
+        document.getElementById('hint-text').innerText = qData.h;
+        
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        qData.a.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index);
+            optionsArea.appendChild(btn);
+        });
+        document.getElementById('fail-count').innerText = fails;
+    }
+
+    function toggleHint() {
+        const hint = document.getElementById('hint-text');
+        hint.style.display = (hint.style.display === 'none' || hint.style.display === '') ? 'block' : 'none';
+    }
+
+    function checkAnswer(idx) {
+        if (idx.toString() === atob(questions[currentIdx].c)) {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        } else {
+            alert("Hatalı Seçim! Sınav en başa dönüyor.");
+            fails++;
+            currentIdx = 0;
+            loadQuestion();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-stats').innerText = `Tebrikler! Toplam ${fails} kez başa dönerek sunum modülü sınavını bitirdiniz.`;
+    }
+
+    function resetGame() {
+        currentIdx = 0;
+        fails = 0;
+        document.getElementById('quiz-area').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
+        loadQuestion();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
